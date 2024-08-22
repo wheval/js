@@ -28,25 +28,6 @@ import { useActiveAccount } from "thirdweb/react";
 import type { Account } from "thirdweb/wallets";
 import { useModuleContractInfo } from "./moduleContractInfo";
 
-function Module(
-  props: Omit<ModuleCardUIProps, "children" | "updateButton"> & {
-    name: string;
-    contract: ContractOptions;
-    isOwnerAccount: boolean;
-  },
-) {
-  return <ModuleCardUI {...props} />;
-  //if (props.name.includes("Transferable")) {
-  //  return <TransferableModule {...props} />;
-  //}
-  //if (props.name.includes("Mintable")) {
-  //  return <MintableModule {...props} />;
-  //}
-  //if (props.name.includes("BurnToRedeem")) {
-  //  return <BurnToRedeemModule {...props} />;
-  //}
-}
-
 type ModuleProps = {
   moduleAddress: string;
   contract: ContractOptions;
@@ -85,12 +66,12 @@ export function ModuleCard(props: ModuleProps) {
       await waitForReceipt(txResult);
     },
     onSuccess() {
-      toast.success("Module Removed successfully");
+      toast.success("Module uninstalled successfully");
       props.onRemoveModule();
     },
     onError(error) {
-      toast.error("Failed to remove module");
-      console.error("Error during uninstallation:", error);
+      toast.error("Failed to uninstall module");
+      console.error(error);
     },
   });
 
@@ -100,7 +81,6 @@ export function ModuleCard(props: ModuleProps) {
       return;
     }
 
-    setIsUninstallModalOpen(false);
     uninstallMutation.mutate(account);
   };
 
@@ -110,8 +90,7 @@ export function ModuleCard(props: ModuleProps) {
 
   return (
     <>
-      <Module
-        name={contractInfo.name}
+      <ModuleCardUI
         contractInfo={{
           name: contractInfo.name,
           description: contractInfo.description,
@@ -120,11 +99,12 @@ export function ModuleCard(props: ModuleProps) {
         }}
         isOwnerAccount={props.isOwnerAccount}
         uninstallButton={{
-          onClick: handleRemove,
+          onClick: () => {
+            setIsUninstallModalOpen(true);
+          },
           isPending: uninstallMutation.isPending,
         }}
         moduleAddress={moduleAddress}
-        contract={contract}
       />
 
       <Dialog
@@ -187,11 +167,11 @@ export type ModuleCardUIProps = {
   moduleAddress: string;
   isOwnerAccount: boolean;
   uninstallButton: {
-    onClick: () => Promise<void>;
+    onClick: () => void;
     isPending: boolean;
   };
   updateButton?: {
-    onClick: () => Promise<void>;
+    onClick: () => void;
     isPending: boolean;
     isDisabled: boolean;
   };
@@ -278,34 +258,32 @@ export function ModuleCardUI(props: ModuleCardUIProps) {
             {props.children}
           </>
         ) : null}
+      </div>
 
-        <div className="h-5" />
+      <div className="flex flex-row justify-end gap-3 border-border border-t p-4 lg:p-6">
+        <Button
+          size="sm"
+          onClick={props.uninstallButton.onClick}
+          variant="destructive"
+          className="min-w-24 gap-2"
+          disabled={!props.isOwnerAccount}
+        >
+          {props.uninstallButton.isPending && <Spinner className="size-4" />}
+          Uninstall
+        </Button>
 
-        <div className="flex flex-row justify-end gap-3 border-border border-t py-4">
+        {props.isOwnerAccount && props.updateButton && (
           <Button
             size="sm"
-            onClick={props.uninstallButton.onClick}
-            variant="destructive"
             className="min-w-24 gap-2"
-            disabled={!props.isOwnerAccount}
+            type="submit"
+            onClick={props.updateButton.onClick}
+            disabled={props.updateButton.isPending || !props.isOwnerAccount}
           >
-            {props.uninstallButton.isPending && <Spinner className="size-4" />}
-            Uninstall
+            {props.updateButton.isPending && <Spinner className="size-4" />}
+            Update
           </Button>
-
-          {props.isOwnerAccount && props.updateButton && (
-            <Button
-              size="sm"
-              className="min-w-24 gap-2"
-              type="submit"
-              onClick={props.updateButton.onClick}
-              disabled={props.updateButton.isPending || !props.isOwnerAccount}
-            >
-              {props.updateButton.isPending && <Spinner className="size-4" />}
-              Update
-            </Button>
-          )}
-        </div>
+        )}
       </div>
     </section>
   );
