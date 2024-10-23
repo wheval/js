@@ -149,8 +149,8 @@ export function TransferrableModuleUI(
                 {/* Warning  */}
                 {formFields.fields.length === 0 ? (
                   <Alert variant="warning">
-                    <CircleAlertIcon className="size-5" />
-                    <AlertTitle>
+                    <CircleAlertIcon className="size-5 max-sm:hidden" />
+                    <AlertTitle className="max-sm:!pl-0">
                       Nobody has permission to transfer tokens on this contract
                     </AlertTitle>
                   </Alert>
@@ -223,8 +223,8 @@ export function TransferrableModuleUI(
 
             {!isRestricted && (
               <Alert variant="info">
-                <CircleAlertIcon className="size-5" />
-                <AlertTitle>
+                <CircleAlertIcon className="size-5 max-sm:hidden" />
+                <AlertTitle className="max-sm:!pl-0">
                   Transferring tokens in this contract is not restricted.
                   Everyone is free to transfer their tokens.
                 </AlertTitle>

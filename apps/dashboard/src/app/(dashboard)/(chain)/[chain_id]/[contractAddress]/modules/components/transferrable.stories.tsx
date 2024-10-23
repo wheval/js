@@ -35,22 +35,6 @@ export const Mobile: Story = {
 const testAddress1 = "0x1F846F6DAE38E1C88D71EAA191760B15f38B7A37";
 const testAddress2 = "0x83Dd93fA5D8343094f850f90B3fb90088C1bB425";
 
-export function CheckboxWithText() {
-  return (
-    <div className="items-top flex space-x-2">
-      <Checkbox id="terms1" />
-      <div className="grid gap-1.5 leading-none">
-        <label
-          htmlFor="terms1"
-          className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          Is Owner
-        </label>
-      </div>
-    </div>
-  );
-}
-
 function Component() {
   const [isOwner, setIsOwner] = useState(true);
   async function updateStub(values: TransferrableModuleFormValues) {
