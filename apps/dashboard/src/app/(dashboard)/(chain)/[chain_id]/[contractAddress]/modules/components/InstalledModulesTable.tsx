@@ -4,7 +4,6 @@ import { ScrollShadow } from "@/components/ui/ScrollShadow/ScrollShadow";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { CircleSlash } from "lucide-react";
 import type { ContractOptions } from "thirdweb";
-import type { Account } from "thirdweb/wallets";
 import { ModuleCard } from "./module-card";
 
 export const InstalledModulesTable = (props: {
@@ -14,9 +13,9 @@ export const InstalledModulesTable = (props: {
     isPending: boolean;
   };
   refetchModules: () => void;
-  ownerAccount?: Account;
+  isOwnerAccount: boolean;
 }) => {
-  const { installedModules, ownerAccount } = props;
+  const { installedModules, isOwnerAccount } = props;
 
   const sectionTitle = (
     <h2 className="mb-3 font-bold text-2xl tracking-tight">
@@ -49,7 +48,7 @@ export const InstalledModulesTable = (props: {
               moduleAddress={moduleAddress}
               contract={props.contract}
               onRemoveModule={props.refetchModules}
-              ownerAccount={ownerAccount}
+              isOwnerAccount={isOwnerAccount}
             />
           ))}
         </div>

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useMutation } from "@tanstack/react-query";
-import { Toaster, toast } from "sonner";
+import { Toaster } from "sonner";
 import { BadgeContainer, mobileViewport } from "stories/utils";
 import { ThirdwebProvider } from "thirdweb/react";
 import { ModuleCardUI } from "./module-card";
@@ -32,8 +32,11 @@ function Component() {
     mutationFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     },
-    onSuccess() {
-      toast.success("Module removed successfully");
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     },
   });
 
@@ -48,7 +51,7 @@ function Component() {
   return (
     <ThirdwebProvider>
       <div className="container flex max-w-[1150px] flex-col gap-10 py-10">
-        <BadgeContainer label="No Update, No Children">
+        <BadgeContainer label="No Update, No Children, Owner Account">
           <ModuleCardUI
             contractInfo={contractInfo}
             moduleAddress="0x0000000000000000000000000000000000000000"
@@ -56,10 +59,23 @@ function Component() {
               onClick: () => removeMutation.mutateAsync(),
               isPending: removeMutation.isPending,
             }}
+            isOwnerAccount={true}
           />
         </BadgeContainer>
 
-        <BadgeContainer label="Update Button (disabled), No Children">
+        <BadgeContainer label="No Update, No Children, Not Owner Account">
+          <ModuleCardUI
+            contractInfo={contractInfo}
+            moduleAddress="0x0000000000000000000000000000000000000000"
+            uninstallButton={{
+              onClick: () => removeMutation.mutateAsync(),
+              isPending: removeMutation.isPending,
+            }}
+            isOwnerAccount={false}
+          />
+        </BadgeContainer>
+
+        <BadgeContainer label="Update Button (disabled), No Children, Owner">
           <ModuleCardUI
             contractInfo={contractInfo}
             moduleAddress="0x0000000000000000000000000000000000000000"
@@ -69,13 +85,14 @@ function Component() {
             }}
             updateButton={{
               isDisabled: true,
-              isPending: false,
-              onClick: () => {},
+              isPending: updateMutation.isPending,
+              onClick: () => updateMutation.mutateAsync(),
             }}
+            isOwnerAccount={true}
           />
         </BadgeContainer>
 
-        <BadgeContainer label="Update Button (enabled), Children">
+        <BadgeContainer label="Update Button (enabled), Children, Owner">
           <ModuleCardUI
             contractInfo={contractInfo}
             moduleAddress="0x0000000000000000000000000000000000000000"
@@ -85,9 +102,10 @@ function Component() {
             }}
             updateButton={{
               isDisabled: false,
-              isPending: false,
-              onClick: () => {},
+              isPending: updateMutation.isPending,
+              onClick: () => updateMutation.mutateAsync(),
             }}
+            isOwnerAccount={true}
           >
             <div className="flex h-36 items-center justify-center rounded-lg bg-muted text-muted-foreground text-sm">
               CHILDREN

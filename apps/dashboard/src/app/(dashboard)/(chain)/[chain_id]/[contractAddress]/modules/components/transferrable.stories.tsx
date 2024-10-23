@@ -1,5 +1,7 @@
+import { Checkbox } from "@/components/ui/checkbox";
 import type { Meta, StoryObj } from "@storybook/react";
 import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { Toaster, toast } from "sonner";
 import { BadgeContainer, mobileViewport } from "stories/utils";
 import { ThirdwebProvider } from "thirdweb/react";
@@ -33,7 +35,24 @@ export const Mobile: Story = {
 const testAddress1 = "0x1F846F6DAE38E1C88D71EAA191760B15f38B7A37";
 const testAddress2 = "0x83Dd93fA5D8343094f850f90B3fb90088C1bB425";
 
+export function CheckboxWithText() {
+  return (
+    <div className="items-top flex space-x-2">
+      <Checkbox id="terms1" />
+      <div className="grid gap-1.5 leading-none">
+        <label
+          htmlFor="terms1"
+          className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          Is Owner
+        </label>
+      </div>
+    </div>
+  );
+}
+
 function Component() {
+  const [isOwner, setIsOwner] = useState(true);
   async function updateStub(values: TransferrableModuleFormValues) {
     console.log("submitting", values);
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -59,6 +78,22 @@ function Component() {
   return (
     <ThirdwebProvider>
       <div className="container flex max-w-[1150px] flex-col gap-10 py-10">
+        <div className="items-top flex space-x-2">
+          <Checkbox
+            id="terms1"
+            checked={isOwner}
+            onCheckedChange={(v) => setIsOwner(!!v)}
+          />
+          <div className="grid gap-1.5 leading-none">
+            <label
+              htmlFor="terms1"
+              className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Is Owner
+            </label>
+          </div>
+        </div>
+
         <BadgeContainer label="Empty AllowList, Not Restricted">
           <TransferrableModuleUI
             contractInfo={contractInfo}
@@ -72,6 +107,7 @@ function Component() {
               onClick: () => removeMutation.mutateAsync(),
               isPending: removeMutation.isPending,
             }}
+            isOwnerAccount={isOwner}
           />
         </BadgeContainer>
 
@@ -88,6 +124,7 @@ function Component() {
               onClick: () => removeMutation.mutateAsync(),
               isPending: removeMutation.isPending,
             }}
+            isOwnerAccount={isOwner}
           />
         </BadgeContainer>
 
@@ -104,6 +141,7 @@ function Component() {
               onClick: () => removeMutation.mutateAsync(),
               isPending: removeMutation.isPending,
             }}
+            isOwnerAccount={isOwner}
           />
         </BadgeContainer>
 
@@ -120,6 +158,7 @@ function Component() {
               onClick: () => removeMutation.mutateAsync(),
               isPending: removeMutation.isPending,
             }}
+            isOwnerAccount={isOwner}
           />
         </BadgeContainer>
 
@@ -136,6 +175,7 @@ function Component() {
               onClick: () => removeMutation.mutateAsync(),
               isPending: removeMutation.isPending,
             }}
+            isOwnerAccount={isOwner}
           />
         </BadgeContainer>
 

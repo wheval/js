@@ -24,6 +24,7 @@ import {
   waitForReceipt,
 } from "thirdweb";
 import { uninstallModuleByProxy } from "thirdweb/modules";
+import { useActiveAccount } from "thirdweb/react";
 import type { Account } from "thirdweb/wallets";
 import { useModuleContractInfo } from "./moduleContractInfo";
 
@@ -31,10 +32,11 @@ export function ModuleCard(props: {
   moduleAddress: string;
   contract: ContractOptions;
   onRemoveModule: () => void;
-  ownerAccount?: Account;
+  isOwnerAccount: boolean;
 }) {
-  const { contract, moduleAddress, ownerAccount } = props;
+  const { contract, moduleAddress } = props;
   const [isUninstallModalOpen, setIsUninstallModalOpen] = useState(false);
+  const account = useActiveAccount();
 
   const contractInfo = useModuleContractInfo(
     getContract({
@@ -72,11 +74,12 @@ export function ModuleCard(props: {
   });
 
   const handleRemove = async () => {
-    if (!ownerAccount) {
+    if (!account) {
+      toast.error("Wallet is not connected");
       return;
     }
 
-    uninstallMutation.mutate(ownerAccount);
+    uninstallMutation.mutate(account);
   };
 
   if (!contractInfo) {
@@ -86,6 +89,7 @@ export function ModuleCard(props: {
   return (
     <>
       <ModuleCardUI
+        isOwnerAccount={props.isOwnerAccount}
         contractInfo={{
           name: contractInfo.name,
           description: contractInfo.description,
@@ -166,6 +170,7 @@ export type ModuleCardUIProps = {
     publisher?: string;
   };
   moduleAddress: string;
+  isOwnerAccount: boolean;
 };
 
 export function ModuleCardUI(props: ModuleCardUIProps) {
@@ -256,7 +261,9 @@ export function ModuleCardUI(props: ModuleCardUIProps) {
             className="min-w-24 gap-2"
             onClick={props.updateButton.onClick}
             disabled={
-              props.updateButton.isDisabled || props.updateButton.isPending
+              props.updateButton.isDisabled ||
+              props.updateButton.isPending ||
+              !props.isOwnerAccount
             }
           >
             {props.updateButton.isPending && <Spinner className="size-4" />}
@@ -269,6 +276,7 @@ export function ModuleCardUI(props: ModuleCardUIProps) {
           onClick={props.uninstallButton.onClick}
           variant="destructive"
           className="min-w-24 gap-2"
+          disabled={!props.isOwnerAccount}
         >
           {props.uninstallButton.isPending && <Spinner className="size-4" />}
           Uninstall

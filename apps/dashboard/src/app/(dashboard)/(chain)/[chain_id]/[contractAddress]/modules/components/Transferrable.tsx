@@ -122,6 +122,7 @@ export function TransferrableModuleUI(
                         <Switch
                           {...restField}
                           checked={field.value}
+                          disabled={!props.isOwnerAccount}
                           className="!m-0"
                           onCheckedChange={(v) => {
                             field.onChange(v);
@@ -167,7 +168,11 @@ export function TransferrableModuleUI(
                           render={({ field }) => (
                             <FormItem className="grow">
                               <FormControl>
-                                <Input placeholder="0x..." {...field} />
+                                <Input
+                                  placeholder="0x..."
+                                  {...field}
+                                  disabled={!props.isOwnerAccount}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -180,6 +185,7 @@ export function TransferrableModuleUI(
                             onClick={() => {
                               formFields.remove(index);
                             }}
+                            disabled={!props.isOwnerAccount}
                           >
                             <Trash2Icon className="size-4" />
                           </Button>
@@ -206,6 +212,7 @@ export function TransferrableModuleUI(
                       });
                     }}
                     className="gap-2"
+                    disabled={!props.isOwnerAccount}
                   >
                     <PlusIcon className="size-3" />
                     Add Address
