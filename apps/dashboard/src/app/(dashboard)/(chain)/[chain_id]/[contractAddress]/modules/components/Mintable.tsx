@@ -1,5 +1,3 @@
-import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -15,13 +13,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { type ContractOptions, waitForReceipt } from "thirdweb";
 import { MintableERC721 } from "thirdweb/modules";
-import {
-  useActiveAccount,
-  useReadContract,
-  useSendTransaction,
-} from "thirdweb/react";
+import { useReadContract, useSendTransaction } from "thirdweb/react";
 import { z } from "zod";
-import type { UninstallButtonProps } from "./module-card";
+import { ModuleCardUI, type ModuleCardUIProps } from "./module-card";
 
 const formSchema = z.object({
   primarySaleRecipient: z.string(),
@@ -29,13 +23,13 @@ const formSchema = z.object({
 
 export type MintableModuleFormValues = z.infer<typeof formSchema>;
 
-export function MintableModule(props: {
-  contract: ContractOptions;
-  uninstallButton: UninstallButtonProps;
-  isOwnerAccount: boolean;
-}) {
+export function MintableModule(
+  props: Omit<ModuleCardUIProps, "children"> & {
+    contract: ContractOptions;
+    isOwnerAccount: boolean;
+  },
+) {
   const { contract } = props;
-  const account = useActiveAccount();
   const { mutateAsync: sendTransaction } = useSendTransaction();
   const { data: primarySaleRecipient, isLoading } = useReadContract(
     MintableERC721.getSaleConfig,
@@ -45,7 +39,6 @@ export function MintableModule(props: {
   );
 
   async function update(values: MintableModuleFormValues) {
-    // isRestricted is the opposite of transferEnabled
     const setSaleConfigTransaction = MintableERC721.setSaleConfig({
       contract,
       primarySaleRecipient: values.primarySaleRecipient,
@@ -67,21 +60,20 @@ export function MintableModule(props: {
     <MintableModuleUI
       isPending={isLoading}
       primarySaleRecipient={primarySaleRecipient || ""}
-      adminAddress={account?.address || ""}
       update={update}
       {...props}
     />
   );
 }
 
-export function MintableModuleUI(props: {
-  primarySaleRecipient: string;
-  isPending: boolean;
-  adminAddress: string;
-  isOwnerAccount: boolean;
-  update: (values: MintableModuleFormValues) => Promise<void>;
-  uninstallButton: UninstallButtonProps;
-}) {
+export function MintableModuleUI(
+  props: Omit<ModuleCardUIProps, "children" | "updateButton"> & {
+    primarySaleRecipient: string;
+    isPending: boolean;
+    isOwnerAccount: boolean;
+    update: (values: MintableModuleFormValues) => Promise<void>;
+  },
+) {
   const form = useForm<MintableModuleFormValues>({
     resolver: zodResolver(formSchema),
     values: {
@@ -98,7 +90,7 @@ export function MintableModuleUI(props: {
     const _values = form.getValues();
     const values = { ..._values };
 
-    await updateMutation.mutateAsync(values);
+    updateMutation.mutate(values);
   };
 
   if (props.isPending) {
@@ -106,60 +98,37 @@ export function MintableModuleUI(props: {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="flex gap-4">
-          {/* Switch */}
-          <FormField
-            control={form.control}
-            name="primarySaleRecipient"
-            render={({ field }) => (
-              <FormItem className="flex flex-1 flex-col gap-3">
-                <FormLabel>Primary Sale Recipient</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="0x..."
-                    {...field}
-                    disabled={!props.isOwnerAccount}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="h-3" />
-
-        <div className="flex flex-row justify-end gap-3 border-border border-t py-4">
-          <Button
-            size="sm"
-            onClick={props.uninstallButton.onClick}
-            variant="destructive"
-            className="min-w-24 gap-2"
-            disabled={!props.isOwnerAccount}
-          >
-            {props.uninstallButton.isPending && <Spinner className="size-4" />}
-            Uninstall
-          </Button>
-
-          {props.isOwnerAccount && (
-            <Button
-              size="sm"
-              className="min-w-24 gap-2"
-              type="submit"
-              disabled={
-                props.isPending ||
-                !props.isOwnerAccount ||
-                !form.formState.isDirty ||
-                updateMutation.isPending
-              }
-            >
-              {updateMutation.isPending && <Spinner className="size-4" />}
-              Update
-            </Button>
-          )}
-        </div>
-      </form>
-    </Form>
+    <ModuleCardUI
+      {...props}
+      updateButton={{
+        onClick: onSubmit,
+        isPending: updateMutation.isPending,
+        isDisabled: !form.formState.isDirty,
+      }}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="flex gap-4">
+            {/* Switch */}
+            <FormField
+              control={form.control}
+              name="primarySaleRecipient"
+              render={({ field }) => (
+                <FormItem className="flex flex-1 flex-col gap-3">
+                  <FormLabel>Primary Sale Recipient</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="0x..."
+                      {...field}
+                      disabled={!props.isOwnerAccount}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+        </form>
+      </Form>
+    </ModuleCardUI>
   );
 }

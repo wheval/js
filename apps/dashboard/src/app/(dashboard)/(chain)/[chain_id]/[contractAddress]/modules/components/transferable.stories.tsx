@@ -50,6 +50,14 @@ function Component() {
     },
   });
 
+  const contractInfo = {
+    name: "Module Name",
+    description:
+      "lorem ipsum dolor sit amet consectetur adipisicing elit sed do eiusmod tempor incididunt ut labore ",
+    publisher: "0xdd99b75f095d0c4d5112aCe938e4e6ed962fb024",
+    version: "1.0.0",
+  };
+
   return (
     <ThirdwebProvider>
       <div className="container flex max-w-[1150px] flex-col gap-10 py-10">
@@ -71,6 +79,8 @@ function Component() {
 
         <BadgeContainer label="Empty AllowList, Not Restricted">
           <TransferableModuleUI
+            contractInfo={contractInfo}
+            moduleAddress="0x0000000000000000000000000000000000000000"
             isPending={false}
             isRestricted={false}
             adminAddress={testAddress1}
@@ -85,6 +95,8 @@ function Component() {
 
         <BadgeContainer label="Empty AllowList, Restricted">
           <TransferableModuleUI
+            contractInfo={contractInfo}
+            moduleAddress="0x0000000000000000000000000000000000000000"
             isPending={false}
             isRestricted={true}
             adminAddress={testAddress1}
@@ -99,6 +111,8 @@ function Component() {
 
         <BadgeContainer label="Length 1 AllowList, Restricted">
           <TransferableModuleUI
+            contractInfo={contractInfo}
+            moduleAddress="0x0000000000000000000000000000000000000000"
             isPending={false}
             isRestricted={true}
             adminAddress={testAddress1}
@@ -113,6 +127,8 @@ function Component() {
 
         <BadgeContainer label="Length 2 AllowList, Restricted">
           <TransferableModuleUI
+            contractInfo={contractInfo}
+            moduleAddress="0x0000000000000000000000000000000000000000"
             isPending={false}
             isRestricted={true}
             adminAddress={testAddress1}
@@ -127,6 +143,8 @@ function Component() {
 
         <BadgeContainer label="Pending">
           <TransferableModuleUI
+            contractInfo={contractInfo}
+            moduleAddress="0x0000000000000000000000000000000000000000"
             isPending={true}
             adminAddress={testAddress1}
             isRestricted={false}

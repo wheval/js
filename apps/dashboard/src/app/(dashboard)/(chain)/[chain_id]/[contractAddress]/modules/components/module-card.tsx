@@ -1,5 +1,6 @@
 import { WalletAddress } from "@/components/blocks/wallet-address";
 import { CopyAddressButton } from "@/components/ui/CopyAddressButton";
+import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,30 +26,25 @@ import {
 import { uninstallModuleByProxy } from "thirdweb/modules";
 import { useActiveAccount } from "thirdweb/react";
 import type { Account } from "thirdweb/wallets";
+import { MintableModule } from "./Mintable";
 import { useModuleContractInfo } from "./moduleContractInfo";
 
-import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { MintableModule } from "./Mintable";
-import { TransferableModule } from "./Transferable";
-
-function Module(props: {
-  name: string;
-  contract: ContractOptions;
-  uninstallButton: UninstallButtonProps;
-  isOwnerAccount: boolean;
-}) {
-  if (props.name.includes("Transferable")) {
-    return <TransferableModule {...props} />;
-  }
+function Module(
+  props: Omit<ModuleCardUIProps, "children" | "updateButton"> & {
+    name: string;
+    contract: ContractOptions;
+    isOwnerAccount: boolean;
+  },
+) {
+  //if (props.name.includes("Transferable")) {
+  //  return <TransferableModule {...props} />;
+  //}
   if (props.name.includes("Mintable")) {
     return <MintableModule {...props} />;
   }
 
-  return null;
+  return <ModuleCardUI {...props} />;
 }
-
-const moduleConfigurationExists = (_moduleName: string) =>
-  /(Mintable|Transferable)/;
 
 type ModuleProps = {
   moduleAddress: string;
@@ -113,39 +109,22 @@ export function ModuleCard(props: ModuleProps) {
 
   return (
     <>
-      <ModuleCardUI
-        isOwnerAccount={props.isOwnerAccount}
+      <Module
+        name={contractInfo.name}
         contractInfo={{
           name: contractInfo.name,
           description: contractInfo.description,
           publisher: contractInfo.publisher,
           version: contractInfo.version,
         }}
+        isOwnerAccount={props.isOwnerAccount}
+        uninstallButton={{
+          onClick: handleRemove,
+          isPending: uninstallMutation.isPending,
+        }}
         moduleAddress={moduleAddress}
-      >
-        {moduleConfigurationExists(contractInfo.name) ? (
-          <Module
-            name={contractInfo.name}
-            isOwnerAccount={props.isOwnerAccount}
-            uninstallButton={{
-              onClick: handleRemove,
-              isPending: uninstallMutation.isPending,
-            }}
-            contract={contract}
-          />
-        ) : (
-          <Button
-            size="sm"
-            onClick={handleRemove}
-            variant="destructive"
-            className="min-w-24 gap-2"
-            disabled={!props.isOwnerAccount}
-          >
-            {uninstallMutation.isPending && <Spinner className="size-4" />}
-            Uninstall
-          </Button>
-        )}
-      </ModuleCardUI>
+        contract={contract}
+      />
 
       <Dialog
         open={isUninstallModalOpen}
@@ -196,13 +175,8 @@ export function ModuleCard(props: ModuleProps) {
   );
 }
 
-export type UninstallButtonProps = {
-  onClick: () => Promise<void>;
-  isPending: boolean;
-};
-
 export type ModuleCardUIProps = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   contractInfo: {
     name: string;
     description?: string;
@@ -211,6 +185,15 @@ export type ModuleCardUIProps = {
   };
   moduleAddress: string;
   isOwnerAccount: boolean;
+  uninstallButton: {
+    onClick: () => Promise<void>;
+    isPending: boolean;
+  };
+  updateButton?: {
+    onClick: () => Promise<void>;
+    isPending: boolean;
+    isDisabled: boolean;
+  };
 };
 
 export function ModuleCardUI(props: ModuleCardUIProps) {
@@ -288,9 +271,40 @@ export function ModuleCardUI(props: ModuleCardUIProps) {
           </p>
         </div>
 
+        {props.children ? (
+          <>
+            <div className="h-5" />
+            {props.children}
+          </>
+        ) : null}
+
         <div className="h-5" />
 
-        {props.children}
+        <div className="flex flex-row justify-end gap-3 border-border border-t py-4">
+          <Button
+            size="sm"
+            onClick={props.uninstallButton.onClick}
+            variant="destructive"
+            className="min-w-24 gap-2"
+            disabled={!props.isOwnerAccount}
+          >
+            {props.uninstallButton.isPending && <Spinner className="size-4" />}
+            Uninstall
+          </Button>
+
+          {props.isOwnerAccount && props.updateButton && (
+            <Button
+              size="sm"
+              className="min-w-24 gap-2"
+              type="submit"
+              onClick={props.updateButton.onClick}
+              disabled={props.updateButton.isPending || !props.isOwnerAccount}
+            >
+              {props.updateButton.isPending && <Spinner className="size-4" />}
+              Update
+            </Button>
+          )}
+        </div>
       </div>
     </section>
   );

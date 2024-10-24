@@ -1,4 +1,3 @@
-import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +25,7 @@ import {
   useSendTransaction,
 } from "thirdweb/react";
 import { z } from "zod";
-import type { UninstallButtonProps } from "./module-card";
+import { ModuleCardUI, type ModuleCardUIProps } from "./module-card";
 
 const formSchema = z.object({
   allowList: z.array(
@@ -50,11 +49,12 @@ const formSchema = z.object({
 
 export type TransferableModuleFormValues = z.infer<typeof formSchema>;
 
-export function TransferableModule(props: {
-  contract: ContractOptions;
-  uninstallButton: UninstallButtonProps;
-  isOwnerAccount: boolean;
-}) {
+export function TransferableModule(
+  props: Omit<ModuleCardUIProps, "children" | "updateButton"> & {
+    contract: ContractOptions;
+    isOwnerAccount: boolean;
+  },
+) {
   const { contract } = props;
   const account = useActiveAccount();
   const { mutateAsync: sendTransaction } = useSendTransaction();
@@ -120,15 +120,16 @@ export function TransferableModule(props: {
   );
 }
 
-export function TransferableModuleUI(props: {
-  // allowList: string[]; // TODO: add this back in when we have a way to get the list of addresses
-  isRestricted: boolean;
-  isPending: boolean;
-  adminAddress: string;
-  isOwnerAccount: boolean;
-  update: (values: TransferableModuleFormValues) => Promise<void>;
-  uninstallButton: UninstallButtonProps;
-}) {
+export function TransferableModuleUI(
+  props: Omit<ModuleCardUIProps, "children" | "updateButton"> & {
+    // allowList: string[]; // TODO: add this back in when we have a way to get the list of addresses
+    isRestricted: boolean;
+    isPending: boolean;
+    adminAddress: string;
+    isOwnerAccount: boolean;
+    update: (values: TransferableModuleFormValues) => Promise<void>;
+  },
+) {
   const form = useForm<TransferableModuleFormValues>({
     resolver: zodResolver(formSchema),
     values: {
@@ -156,7 +157,7 @@ export function TransferableModuleUI(props: {
       values.allowList = [];
     }
 
-    await updateMutation.mutateAsync(values);
+    updateMutation.mutate(values);
   };
 
   const isRestricted = form.watch("isRestricted");
@@ -166,160 +167,139 @@ export function TransferableModuleUI(props: {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="flex items-center gap-4">
-          {/* Switch */}
-          <FormField
-            control={form.control}
-            name="isRestricted"
-            render={({ field }) => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              const { value, ...restField } = field;
+    <ModuleCardUI
+      {...props}
+      updateButton={{
+        onClick: onSubmit,
+        isPending: updateMutation.isPending,
+        isDisabled: !form.formState.isDirty,
+      }}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="flex items-center gap-4">
+            {/* Switch */}
+            <FormField
+              control={form.control}
+              name="isRestricted"
+              render={({ field }) => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { value, ...restField } = field;
 
-              return (
-                <FormItem className="flex items-center gap-3">
-                  <FormLabel>Restrict Transfers</FormLabel>
-                  <FormControl>
-                    <Switch
-                      {...restField}
-                      checked={field.value}
-                      disabled={!props.isOwnerAccount}
-                      className="!m-0"
-                      onCheckedChange={(v) => {
-                        field.onChange(v);
-
-                        // if enabling restrictions and allowlist is empty, add the admin address by default
-                        if (v === true && formFields.fields.length === 0) {
-                          formFields.append({
-                            address: props.adminAddress || "",
-                          });
-                        }
-                      }}
-                    />
-                  </FormControl>
-                </FormItem>
-              );
-            }}
-          />
-        </div>
-
-        <div className="h-3" />
-
-        {isRestricted && (
-          <div className="w-full">
-            {/* Warning  */}
-            {formFields.fields.length === 0 ? (
-              <Alert variant="warning">
-                <CircleAlertIcon className="size-5 max-sm:hidden" />
-                <AlertTitle className="max-sm:!pl-0">
-                  Nobody has permission to transfer tokens on this contract
-                </AlertTitle>
-              </Alert>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {/* Addresses */}
-                {formFields.fields.map((fieldItem, index) => (
-                  <div className="flex items-start gap-3" key={fieldItem.id}>
-                    <FormField
-                      control={form.control}
-                      name={`allowList.${index}.address`}
-                      render={({ field }) => (
-                        <FormItem className="grow">
-                          <FormControl>
-                            <Input
-                              placeholder="0x..."
-                              {...field}
-                              disabled={!props.isOwnerAccount}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <ToolTipLabel label="Remove address">
-                      <Button
-                        variant="outline"
-                        className="!text-destructive-text bg-background"
-                        onClick={() => {
-                          formFields.remove(index);
-                        }}
+                return (
+                  <FormItem className="flex items-center gap-3">
+                    <FormLabel>Restrict Transfers</FormLabel>
+                    <FormControl>
+                      <Switch
+                        {...restField}
+                        checked={field.value}
                         disabled={!props.isOwnerAccount}
-                      >
-                        <Trash2Icon className="size-4" />
-                      </Button>
-                    </ToolTipLabel>
-                  </div>
-                ))}
-              </div>
-            )}
+                        className="!m-0"
+                        onCheckedChange={(v) => {
+                          field.onChange(v);
 
-            <div className="h-3" />
-
-            {/* Add Addresses Actions */}
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  // add admin by default if adding the first input
-                  formFields.append({
-                    address:
-                      formFields.fields.length === 0 ? props.adminAddress : "",
-                  });
-                }}
-                className="gap-2"
-                disabled={!props.isOwnerAccount}
-              >
-                <PlusIcon className="size-3" />
-                Add Address
-              </Button>
-            </div>
+                          // if enabling restrictions and allowlist is empty, add the admin address by default
+                          if (v === true && formFields.fields.length === 0) {
+                            formFields.append({
+                              address: props.adminAddress || "",
+                            });
+                          }
+                        }}
+                      />
+                    </FormControl>
+                  </FormItem>
+                );
+              }}
+            />
           </div>
-        )}
 
-        {!isRestricted && (
-          <Alert variant="info">
-            <CircleAlertIcon className="size-5 max-sm:hidden" />
-            <AlertTitle className="max-sm:!pl-0">
-              Transferring tokens in this contract is not restricted. Everyone
-              is free to transfer their tokens.
-            </AlertTitle>
-          </Alert>
-        )}
+          <div className="h-3" />
 
-        <div className="h-3" />
+          {isRestricted && (
+            <div className="w-full">
+              {/* Warning  */}
+              {formFields.fields.length === 0 ? (
+                <Alert variant="warning">
+                  <CircleAlertIcon className="size-5 max-sm:hidden" />
+                  <AlertTitle className="max-sm:!pl-0">
+                    Nobody has permission to transfer tokens on this contract
+                  </AlertTitle>
+                </Alert>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {/* Addresses */}
+                  {formFields.fields.map((fieldItem, index) => (
+                    <div className="flex items-start gap-3" key={fieldItem.id}>
+                      <FormField
+                        control={form.control}
+                        name={`allowList.${index}.address`}
+                        render={({ field }) => (
+                          <FormItem className="grow">
+                            <FormControl>
+                              <Input
+                                placeholder="0x..."
+                                {...field}
+                                disabled={!props.isOwnerAccount}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <ToolTipLabel label="Remove address">
+                        <Button
+                          variant="outline"
+                          className="!text-destructive-text bg-background"
+                          onClick={() => {
+                            formFields.remove(index);
+                          }}
+                          disabled={!props.isOwnerAccount}
+                        >
+                          <Trash2Icon className="size-4" />
+                        </Button>
+                      </ToolTipLabel>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-        <div className="flex flex-row justify-end gap-3 border-border border-t py-4">
-          <Button
-            size="sm"
-            onClick={props.uninstallButton.onClick}
-            variant="destructive"
-            className="min-w-24 gap-2"
-            disabled={!props.isOwnerAccount}
-          >
-            {props.uninstallButton.isPending && <Spinner className="size-4" />}
-            Uninstall
-          </Button>
+              <div className="h-3" />
 
-          {props.isOwnerAccount && (
-            <Button
-              size="sm"
-              className="min-w-24 gap-2"
-              type="submit"
-              disabled={
-                props.isPending ||
-                !props.isOwnerAccount ||
-                !form.formState.isDirty ||
-                updateMutation.isPending
-              }
-            >
-              {updateMutation.isPending && <Spinner className="size-4" />}
-              Update
-            </Button>
+              {/* Add Addresses Actions */}
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // add admin by default if adding the first input
+                    formFields.append({
+                      address:
+                        formFields.fields.length === 0
+                          ? props.adminAddress
+                          : "",
+                    });
+                  }}
+                  className="gap-2"
+                  disabled={!props.isOwnerAccount}
+                >
+                  <PlusIcon className="size-3" />
+                  Add Address
+                </Button>
+              </div>
+            </div>
           )}
-        </div>
-      </form>
-    </Form>
+
+          {!isRestricted && (
+            <Alert variant="info">
+              <CircleAlertIcon className="size-5 max-sm:hidden" />
+              <AlertTitle className="max-sm:!pl-0">
+                Transferring tokens in this contract is not restricted. Everyone
+                is free to transfer their tokens.
+              </AlertTitle>
+            </Alert>
+          )}
+        </form>
+      </Form>
+    </ModuleCardUI>
   );
 }
