@@ -26,6 +26,7 @@ import {
 import { uninstallModuleByProxy } from "thirdweb/modules";
 import { useActiveAccount } from "thirdweb/react";
 import type { Account } from "thirdweb/wallets";
+import { BurnToRedeemModule } from "./BurnToRedeem";
 import { MintableModule } from "./Mintable";
 import { useModuleContractInfo } from "./moduleContractInfo";
 
@@ -41,6 +42,9 @@ function Module(
   //}
   if (props.name.includes("Mintable")) {
     return <MintableModule {...props} />;
+  }
+  if (props.name.includes("BurnToRedeem")) {
+    return <BurnToRedeemModule {...props} />;
   }
 
   return <ModuleCardUI {...props} />;
