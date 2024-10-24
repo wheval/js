@@ -27,6 +27,8 @@ import { useActiveAccount } from "thirdweb/react";
 import type { Account } from "thirdweb/wallets";
 import { useModuleContractInfo } from "./moduleContractInfo";
 
+import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { MintableModule } from "./Mintable";
 import { TransferableModule } from "./Transferable";
 
 function Module(props: {
@@ -38,9 +40,15 @@ function Module(props: {
   if (props.name.includes("Transferable")) {
     return <TransferableModule {...props} />;
   }
+  if (props.name.includes("Mintable")) {
+    return <MintableModule {...props} />;
+  }
 
   return null;
 }
+
+const moduleConfigurationExists = (_moduleName: string) =>
+  /(Mintable|Transferable)/;
 
 type ModuleProps = {
   moduleAddress: string;
@@ -95,6 +103,7 @@ export function ModuleCard(props: ModuleProps) {
       return;
     }
 
+    setIsUninstallModalOpen(false);
     uninstallMutation.mutate(account);
   };
 
@@ -114,18 +123,28 @@ export function ModuleCard(props: ModuleProps) {
         }}
         moduleAddress={moduleAddress}
       >
-        <Module
-          name={contractInfo.name}
-          isOwnerAccount={props.isOwnerAccount}
-          uninstallButton={{
-            onClick: async () => {
-              setIsUninstallModalOpen(true);
-              await uninstallMutation.mutateAsync(account);
-            },
-            isPending: uninstallMutation.isPending,
-          }}
-          contract={contract}
-        />
+        {moduleConfigurationExists(contractInfo.name) ? (
+          <Module
+            name={contractInfo.name}
+            isOwnerAccount={props.isOwnerAccount}
+            uninstallButton={{
+              onClick: handleRemove,
+              isPending: uninstallMutation.isPending,
+            }}
+            contract={contract}
+          />
+        ) : (
+          <Button
+            size="sm"
+            onClick={handleRemove}
+            variant="destructive"
+            className="min-w-24 gap-2"
+            disabled={!props.isOwnerAccount}
+          >
+            {uninstallMutation.isPending && <Spinner className="size-4" />}
+            Uninstall
+          </Button>
+        )}
       </ModuleCardUI>
 
       <Dialog
