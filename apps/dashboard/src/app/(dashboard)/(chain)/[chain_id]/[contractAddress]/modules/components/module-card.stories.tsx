@@ -28,13 +28,13 @@ export const Mobile: Story = {
 };
 
 function Component() {
-  const removeMutation = useMutation({
+  const _removeMutation = useMutation({
     mutationFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     },
   });
 
-  const updateMutation = useMutation({
+  const _updateMutation = useMutation({
     mutationFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     },
@@ -55,56 +55,42 @@ function Component() {
           <ModuleCardUI
             contractInfo={contractInfo}
             moduleAddress="0x0000000000000000000000000000000000000000"
-            uninstallButton={{
-              onClick: () => removeMutation.mutateAsync(),
-              isPending: removeMutation.isPending,
-            }}
             isOwnerAccount={true}
-          />
+          >
+            <div className="flex h-36 items-center justify-center rounded-lg bg-muted text-muted-foreground text-sm">
+              CHILDREN
+            </div>
+          </ModuleCardUI>
         </BadgeContainer>
 
         <BadgeContainer label="No Update, No Children, Not Owner Account">
           <ModuleCardUI
             contractInfo={contractInfo}
             moduleAddress="0x0000000000000000000000000000000000000000"
-            uninstallButton={{
-              onClick: () => removeMutation.mutateAsync(),
-              isPending: removeMutation.isPending,
-            }}
             isOwnerAccount={false}
-          />
+          >
+            <div className="flex h-36 items-center justify-center rounded-lg bg-muted text-muted-foreground text-sm">
+              CHILDREN
+            </div>
+          </ModuleCardUI>
         </BadgeContainer>
 
         <BadgeContainer label="Update Button (disabled), No Children, Owner">
           <ModuleCardUI
             contractInfo={contractInfo}
             moduleAddress="0x0000000000000000000000000000000000000000"
-            uninstallButton={{
-              onClick: () => removeMutation.mutateAsync(),
-              isPending: removeMutation.isPending,
-            }}
-            updateButton={{
-              isDisabled: true,
-              isPending: updateMutation.isPending,
-              onClick: () => updateMutation.mutateAsync(),
-            }}
             isOwnerAccount={true}
-          />
+          >
+            <div className="flex h-36 items-center justify-center rounded-lg bg-muted text-muted-foreground text-sm">
+              CHILDREN
+            </div>
+          </ModuleCardUI>
         </BadgeContainer>
 
         <BadgeContainer label="Update Button (enabled), Children, Owner">
           <ModuleCardUI
             contractInfo={contractInfo}
             moduleAddress="0x0000000000000000000000000000000000000000"
-            uninstallButton={{
-              onClick: () => removeMutation.mutateAsync(),
-              isPending: removeMutation.isPending,
-            }}
-            updateButton={{
-              isDisabled: false,
-              isPending: updateMutation.isPending,
-              onClick: () => updateMutation.mutateAsync(),
-            }}
             isOwnerAccount={true}
           >
             <div className="flex h-36 items-center justify-center rounded-lg bg-muted text-muted-foreground text-sm">

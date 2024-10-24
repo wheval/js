@@ -6,12 +6,12 @@ import { Toaster, toast } from "sonner";
 import { BadgeContainer, mobileViewport } from "stories/utils";
 import { ThirdwebProvider } from "thirdweb/react";
 import {
-  type TransferrableModuleFormValues,
-  TransferrableModuleUI,
-} from "./Transferrable";
+  type TransferableModuleFormValues,
+  TransferableModuleUI,
+} from "./Transferable";
 
 const meta = {
-  title: "Modules/Transferrable",
+  title: "Modules/Transferable",
   component: Component,
   parameters: {
     layout: "centered",
@@ -33,11 +33,10 @@ export const Mobile: Story = {
 };
 
 const testAddress1 = "0x1F846F6DAE38E1C88D71EAA191760B15f38B7A37";
-const testAddress2 = "0x83Dd93fA5D8343094f850f90B3fb90088C1bB425";
 
 function Component() {
   const [isOwner, setIsOwner] = useState(true);
-  async function updateStub(values: TransferrableModuleFormValues) {
+  async function updateStub(values: TransferableModuleFormValues) {
     console.log("submitting", values);
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
@@ -50,14 +49,6 @@ function Component() {
       toast.success("Module removed successfully");
     },
   });
-
-  const contractInfo = {
-    name: "TransferrableModule",
-    description:
-      "Control transferability of ERC721 tokens, such as enabling or disabling transfers.",
-    publisher: "0xdd99b75f095d0c4d5112aCe938e4e6ed962fb024",
-    version: "1.0.0",
-  };
 
   return (
     <ThirdwebProvider>
@@ -79,16 +70,13 @@ function Component() {
         </div>
 
         <BadgeContainer label="Empty AllowList, Not Restricted">
-          <TransferrableModuleUI
-            contractInfo={contractInfo}
-            moduleAddress="0x0000000000000000000000000000000000000000"
-            allowList={[]}
+          <TransferableModuleUI
             isPending={false}
             isRestricted={false}
             adminAddress={testAddress1}
             update={updateStub}
             uninstallButton={{
-              onClick: () => removeMutation.mutateAsync(),
+              onClick: async () => removeMutation.mutateAsync(),
               isPending: removeMutation.isPending,
             }}
             isOwnerAccount={isOwner}
@@ -96,10 +84,7 @@ function Component() {
         </BadgeContainer>
 
         <BadgeContainer label="Empty AllowList, Restricted">
-          <TransferrableModuleUI
-            contractInfo={contractInfo}
-            moduleAddress="0x0000000000000000000000000000000000000000"
-            allowList={[]}
+          <TransferableModuleUI
             isPending={false}
             isRestricted={true}
             adminAddress={testAddress1}
@@ -113,10 +98,7 @@ function Component() {
         </BadgeContainer>
 
         <BadgeContainer label="Length 1 AllowList, Restricted">
-          <TransferrableModuleUI
-            contractInfo={contractInfo}
-            moduleAddress="0x0000000000000000000000000000000000000000"
-            allowList={[testAddress1]}
+          <TransferableModuleUI
             isPending={false}
             isRestricted={true}
             adminAddress={testAddress1}
@@ -130,10 +112,7 @@ function Component() {
         </BadgeContainer>
 
         <BadgeContainer label="Length 2 AllowList, Restricted">
-          <TransferrableModuleUI
-            contractInfo={contractInfo}
-            moduleAddress="0x0000000000000000000000000000000000000000"
-            allowList={[testAddress1, testAddress2]}
+          <TransferableModuleUI
             isPending={false}
             isRestricted={true}
             adminAddress={testAddress1}
@@ -147,10 +126,7 @@ function Component() {
         </BadgeContainer>
 
         <BadgeContainer label="Pending">
-          <TransferrableModuleUI
-            contractInfo={contractInfo}
-            moduleAddress="0x0000000000000000000000000000000000000000"
-            allowList={[]}
+          <TransferableModuleUI
             isPending={true}
             adminAddress={testAddress1}
             isRestricted={false}

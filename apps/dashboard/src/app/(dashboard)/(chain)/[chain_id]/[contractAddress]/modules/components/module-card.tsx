@@ -1,6 +1,5 @@
 import { WalletAddress } from "@/components/blocks/wallet-address";
 import { CopyAddressButton } from "@/components/ui/CopyAddressButton";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,12 +27,29 @@ import { useActiveAccount } from "thirdweb/react";
 import type { Account } from "thirdweb/wallets";
 import { useModuleContractInfo } from "./moduleContractInfo";
 
-export function ModuleCard(props: {
+import { TransferableModule } from "./Transferable";
+
+function Module(props: {
+  name: string;
+  contract: ContractOptions;
+  uninstallButton: UninstallButtonProps;
+  isOwnerAccount: boolean;
+}) {
+  if (props.name.includes("Transferable")) {
+    return <TransferableModule {...props} />;
+  }
+
+  return null;
+}
+
+type ModuleProps = {
   moduleAddress: string;
   contract: ContractOptions;
   onRemoveModule: () => void;
   isOwnerAccount: boolean;
-}) {
+};
+
+export function ModuleCard(props: ModuleProps) {
   const { contract, moduleAddress } = props;
   const [isUninstallModalOpen, setIsUninstallModalOpen] = useState(false);
   const account = useActiveAccount();
@@ -97,11 +113,20 @@ export function ModuleCard(props: {
           version: contractInfo.version,
         }}
         moduleAddress={moduleAddress}
-        uninstallButton={{
-          onClick: () => setIsUninstallModalOpen(true),
-          isPending: uninstallMutation.isPending,
-        }}
-      />
+      >
+        <Module
+          name={contractInfo.name}
+          isOwnerAccount={props.isOwnerAccount}
+          uninstallButton={{
+            onClick: async () => {
+              setIsUninstallModalOpen(true);
+              await uninstallMutation.mutateAsync(account);
+            },
+            isPending: uninstallMutation.isPending,
+          }}
+          contract={contract}
+        />
+      </ModuleCardUI>
 
       <Dialog
         open={isUninstallModalOpen}
@@ -152,17 +177,13 @@ export function ModuleCard(props: {
   );
 }
 
+export type UninstallButtonProps = {
+  onClick: () => Promise<void>;
+  isPending: boolean;
+};
+
 export type ModuleCardUIProps = {
-  updateButton?: {
-    onClick: () => void;
-    isPending: boolean;
-    isDisabled: boolean;
-  };
-  uninstallButton: {
-    onClick: () => void;
-    isPending: boolean;
-  };
-  children?: React.ReactNode;
+  children: React.ReactNode;
   contractInfo: {
     name: string;
     description?: string;
@@ -180,8 +201,66 @@ export function ModuleCardUI(props: ModuleCardUIProps) {
       <div className="relative p-4 lg:p-6">
         {/* Title */}
         <div className="pr-14">
-          <h3 className="mb-1 font-semibold text-xl tracking-tight">
+          <h3 className="mb-1 gap-2 font-semibold text-xl tracking-tight">
             {props.contractInfo.name}
+
+            {/* Info Dialog */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="absolute top-4 right-4 h-auto w-auto p-2 text-muted-foreground"
+                >
+                  <InfoIcon className="size-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{props.contractInfo.name}</DialogTitle>
+                  <DialogDescription>
+                    {props.contractInfo.description}
+                  </DialogDescription>
+
+                  {/* Avoid adding focus on other elements to prevent tooltips from opening on modal open */}
+                  <input className="sr-only" aria-hidden />
+
+                  <div className="h-2" />
+
+                  <div className="flex flex-col gap-4">
+                    {props.contractInfo.version && (
+                      <div>
+                        <p className="text-muted-foreground text-sm">
+                          {" "}
+                          Version{" "}
+                        </p>
+                        <p> {props.contractInfo.version}</p>
+                      </div>
+                    )}
+
+                    {props.contractInfo.publisher && (
+                      <div>
+                        <p className="text-muted-foreground text-sm">
+                          Published By
+                        </p>
+                        <WalletAddress address={props.contractInfo.publisher} />
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="mb-1 text-muted-foreground text-sm">
+                        Module Address
+                      </p>
+                      <CopyAddressButton
+                        className="text-xs"
+                        address={props.moduleAddress}
+                        copyIconPosition="left"
+                        variant="outline"
+                      />
+                    </div>
+                  </div>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
           </h3>
 
           {/* Description */}
@@ -190,97 +269,9 @@ export function ModuleCardUI(props: ModuleCardUIProps) {
           </p>
         </div>
 
-        {/* Info Dialog */}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button
-              variant="ghost"
-              className="absolute top-4 right-4 h-auto w-auto p-2 text-muted-foreground"
-            >
-              <InfoIcon className="size-5" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{props.contractInfo.name}</DialogTitle>
-              <DialogDescription>
-                {props.contractInfo.description}
-              </DialogDescription>
+        <div className="h-5" />
 
-              {/* Avoid adding focus on other elements to prevent tooltips from opening on modal open */}
-              <input className="sr-only" aria-hidden />
-
-              <div className="h-2" />
-
-              <div className="flex flex-col gap-4">
-                {props.contractInfo.version && (
-                  <div>
-                    <p className="text-muted-foreground text-sm"> Version </p>
-                    <p> {props.contractInfo.version}</p>
-                  </div>
-                )}
-
-                {props.contractInfo.publisher && (
-                  <div>
-                    <p className="text-muted-foreground text-sm">
-                      Published By
-                    </p>
-                    <WalletAddress address={props.contractInfo.publisher} />
-                  </div>
-                )}
-
-                <div>
-                  <p className="mb-1 text-muted-foreground text-sm">
-                    Module Address
-                  </p>
-                  <CopyAddressButton
-                    className="text-xs"
-                    address={props.moduleAddress}
-                    copyIconPosition="left"
-                    variant="outline"
-                  />
-                </div>
-              </div>
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
-
-        {props.children ? (
-          <>
-            <div className="h-5" />
-            {props.children}
-          </>
-        ) : null}
-      </div>
-
-      {/* Footer */}
-      <div className="flex flex-row justify-end gap-3 border-border border-t px-4 py-4 lg:px-6">
-        {props.updateButton && (
-          <Button
-            size="sm"
-            className="min-w-24 gap-2"
-            onClick={props.updateButton.onClick}
-            disabled={
-              props.updateButton.isDisabled ||
-              props.updateButton.isPending ||
-              !props.isOwnerAccount
-            }
-          >
-            {props.updateButton.isPending && <Spinner className="size-4" />}
-            Update
-          </Button>
-        )}
-
-        <Button
-          size="sm"
-          onClick={props.uninstallButton.onClick}
-          variant="destructive"
-          className="min-w-24 gap-2"
-          disabled={!props.isOwnerAccount}
-        >
-          {props.uninstallButton.isPending && <Spinner className="size-4" />}
-          Uninstall
-        </Button>
+        {props.children}
       </div>
     </section>
   );
