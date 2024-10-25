@@ -85,7 +85,6 @@ export function MintableModule(
     });
 
     const grantTxResult = await sendTransaction(grantTransaction);
-    console.log("grantTxResult: ", grantTxResult);
 
     try {
       await waitForReceipt(grantTxResult);
@@ -102,7 +101,6 @@ export function MintableModule(
       });
 
       const txResult = await sendTransaction(transaction);
-      console.log("mint txResult: ", txResult);
 
       try {
         await waitForReceipt(txResult);
