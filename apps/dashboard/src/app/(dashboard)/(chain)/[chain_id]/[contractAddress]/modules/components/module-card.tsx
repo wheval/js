@@ -35,6 +35,7 @@ function Module(
     isOwnerAccount: boolean;
   },
 ) {
+  return <ModuleCardUI {...props} />;
   //if (props.name.includes("Transferable")) {
   //  return <TransferableModule {...props} />;
   //}
@@ -44,8 +45,6 @@ function Module(
   //if (props.name.includes("BurnToRedeem")) {
   //  return <BurnToRedeemModule {...props} />;
   //}
-
-  return <ModuleCardUI {...props} />;
 }
 
 type ModuleProps = {
