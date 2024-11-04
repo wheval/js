@@ -412,12 +412,12 @@ const chainMetaRecord = {
     headerImgUrl: shidoBanner.src,
     about:
       "Shido Network is a superfast EVM chain with the lowest fees. Seamlessly interoperable with the the Cosmos, EVM and WASM. Bringing you the future of DeFi, unlocking unified liquidity through chain abstraction.",
-      cta: {
-        backgroundImageUrl: shidoCta.src,
-        title: "Endless scalability with Shido Network",
-        buttonLink: "https://shido.io/",
-        buttonText: "Learn more",
-      },
+    cta: {
+      backgroundImageUrl: shidoCta.src,
+      title: "Endless scalability with Shido Network",
+      buttonLink: "https://shido.io/",
+      buttonText: "Learn more",
+    },
   },
 } satisfies Record<number, ExtraChainMetadata>;
 // END TEMPORARY
