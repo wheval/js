@@ -2,43 +2,39 @@ import {
   Divider,
   Flex,
   FormControl,
-  Input,
   InputGroup,
   InputRightElement,
-  Textarea,
   Tooltip,
   useBreakpointValue,
 } from "@chakra-ui/react";
 import type { AbiParameter } from "abitype";
 import { SolidityInput } from "contract-ui/components/solidity-inputs";
-import { camelToTitle } from "contract-ui/components/solidity-inputs/helpers";
 import { getTemplateValuesForType } from "lib/deployment/template-values";
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import {
   Button,
   Card,
   Checkbox,
   FormErrorMessage,
-  FormHelperText,
   FormLabel,
   Heading,
   Text,
 } from "tw-components";
 import { RefContractsFieldset } from "./ref-input-fieldset";
-import { useState } from "react";
 
-interface ContractParamsFieldsetProps {
-  deployParams: readonly AbiParameter[];
+interface ImplementationParamsFieldsetProps {
+  implParams: readonly AbiParameter[];
 }
-export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
-  deployParams,
+export const ImplementationParamsFieldset: React.FC<ImplementationParamsFieldsetProps> = ({
+  implParams,
 }) => {
   const form = useFormContext();
 
   const isMobile = useBreakpointValue({ base: true, md: false });
   
   const [isCustomInputEnabled, setIsCustomInputEnabled] = useState(
-    Array(deployParams.length).fill(false)
+    Array(implParams.length).fill(false)
   );
 
   const handleToggleCustomInput = (index: number) => {
@@ -50,11 +46,11 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
 
     // Clear values accordingly when toggling between input types
     if (isCustomInputEnabled[index]) {
-      form.setValue(`implConstructorParams.${deployParams[index]?.name || "*"}.defaultValue`, "", {
+      form.setValue(`implConstructorParams.${implParams[index]?.name || "*"}.defaultValue`, "", {
         shouldDirty: true,
       });
     } else {
-      form.setValue(`implConstructorParams.${deployParams[index]?.name || "*"}.ref`, "", {
+      form.setValue(`implConstructorParams.${implParams[index]?.name || "*"}.ref`, "", {
         shouldDirty: true,
       });
     }
@@ -63,14 +59,14 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
   return (
     <Flex gap={16} direction="column" as="fieldset">
       <Flex gap={2} direction="column">
-        <Heading size="title.lg">Contract Parameters</Heading>
+        <Heading size="title.lg">Implementation Contract Constructor Parameters</Heading>
         <Text fontStyle="normal">
           These are the parameters users will need to fill in when deploying
           this contract.
         </Text>
       </Flex>
       <Flex flexDir="column" gap={10}>
-        {deployParams.map((param, idx) => {
+        {implParams.map((param, idx) => {
           const paramTemplateValues = getTemplateValuesForType(param.type);
           return (
             <Flex flexDir="column" gap={6} key={`implementation_${param.name}`}>
@@ -89,47 +85,7 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
                   <FormControl
                     isInvalid={
                       !!form.getFieldState(
-                        `constructorParams.${
-                          param.name ? param.name : "*"
-                        }.displayName`,
-                        form.formState,
-                      ).error
-                    }
-                  >
-                    <FormLabel flex="1" as={Text}>
-                      Display Name
-                    </FormLabel>
-                    <Input
-                      value={form.watch(
-                        `constructorParams.${
-                          param.name ? param.name : "*"
-                        }.displayName`,
-                      )}
-                      onChange={(e) =>
-                        form.setValue(
-                          `constructorParams.${
-                            param.name ? param.name : "*"
-                          }.displayName`,
-                          e.target.value,
-                        )
-                      }
-                      placeholder={camelToTitle(param.name ? param.name : "*")}
-                    />
-                    <FormErrorMessage>
-                      {
-                        form.getFieldState(
-                          `constructorParams.${
-                            param.name ? param.name : "*"
-                          }.displayName`,
-                          form.formState,
-                        ).error?.message
-                      }
-                    </FormErrorMessage>
-                  </FormControl>
-                  <FormControl
-                    isInvalid={
-                      !!form.getFieldState(
-                        `constructorParams.${
+                        `implConstructorParams.${
                           param.name ? param.name : "*"
                         }.defaultValue`,
                         form.formState,
@@ -153,7 +109,7 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
                                   : "This value will be pre-filled in the deploy form."
                               }
                               {...form.register(
-                                `constructorParams.${
+                                `implConstructorParams.${
                                   param.name ? param.name : "*"
                                 }.defaultValue`,
                               )}
@@ -163,7 +119,7 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
                           <RefContractsFieldset param={param} />
                         )}
 
-                        {param.type === "address" && ( 
+                        {param.type === "address" && (
                           <Checkbox
                             isChecked={isCustomInputEnabled[idx]}
                             onChange={() => handleToggleCustomInput(idx)}
@@ -198,7 +154,7 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
                               paddingY="3.5"
                               onClick={() => {
                                 form.setValue(
-                                  `constructorParams.${
+                                  `implConstructorParams.${
                                     param.name ? param.name : "*"
                                   }.defaultValue`,
                                   paramTemplateValues[0]?.value,
@@ -217,7 +173,7 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
                     <FormErrorMessage>
                       {
                         form.getFieldState(
-                          `constructorParams.${
+                          `implConstructorParams.${
                             param.name ? param.name : "*"
                           }.defaultValue`,
                           form.formState,
@@ -226,85 +182,8 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
                     </FormErrorMessage>
                   </FormControl>
                 </Flex>
-                <Flex flexDir="column" w="full">
-                  <FormControl
-                    isInvalid={
-                      !!form.getFieldState(
-                        `constructorParams.${
-                          param.name ? param.name : "*"
-                        }.description`,
-                        form.formState,
-                      ).error
-                    }
-                  >
-                    <FormLabel as={Text}>Description</FormLabel>
-                    <Textarea
-                      value={form.watch(
-                        `constructorParams.${
-                          param.name ? param.name : "*"
-                        }.description`,
-                      )}
-                      onChange={(e) =>
-                        form.setValue(
-                          `constructorParams.${
-                            param.name ? param.name : "*"
-                          }.description`,
-                          e.target.value,
-                        )
-                      }
-                      h="full"
-                      maxLength={400}
-                      placeholder="Enter a description for this parameter."
-                    />
-                    <FormHelperText>
-                      {form.watch(
-                        `constructorParams.${
-                          param.name ? param.name : "*"
-                        }.description`,
-                      )?.length ?? 0}
-                      /400 characters
-                    </FormHelperText>
-                  </FormControl>
-                </Flex>
-                {form.watch(
-                  `constructorParams.${
-                    param.name ? param.name : "*"
-                  }.defaultValue`,
-                ) && (
-                  <Flex flexDir="column" w="full">
-                    <FormControl
-                      isInvalid={
-                        !!form.getFieldState(
-                          `constructorParams.${
-                            param.name ? param.name : "*"
-                          }.description`,
-                          form.formState,
-                        ).error
-                      }
-                    >
-                      <Checkbox
-                        placeSelf="start"
-                        {...form.register(
-                          `constructorParams.${
-                            param.name ? param.name : "*"
-                          }.hidden`,
-                        )}
-                      >
-                        <Flex flexDir="column">
-                          <FormLabel as={Text} m={0}>
-                            Advanced Parameter
-                          </FormLabel>
-                          <Text>
-                            This parameter will be in the collapsed advanced
-                            section.
-                          </Text>
-                        </Flex>
-                      </Checkbox>
-                    </FormControl>
-                  </Flex>
-                )}
               </Flex>
-              {idx !== deployParams.length - 1 ? <Divider mt={8} /> : null}
+              {idx !== implParams.length - 1 ? <Divider mt={8} /> : null}
             </Flex>
           );
         })}
