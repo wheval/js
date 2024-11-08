@@ -1,4 +1,3 @@
-import { ChakraProviderSetup } from "@/components/ChakraProviderSetup";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -7,32 +6,28 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ContractCard } from "components/explore/contract-card";
+import {
+  ContractCard,
+  ContractCardSkeleton,
+} from "components/explore/contract-card";
 import { DeployUpsellCard } from "components/explore/upsells/deploy-your-own";
 import { ALL_CATEGORIES, getCategory } from "data/explore";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 type ExploreCategoryPageProps = {
-  params: {
+  params: Promise<{
     category: string;
-  };
+  }>;
 };
 
-export const metadata: Metadata = {
-  title: "Explore | Smart Contracts",
-  description:
-    "Browse a large collection of ready-to-deploy contracts that have been built by thirdweb and other contract developers. Find a contract for your specific app's or game's needs.",
-  openGraph: {
-    title: "thirdweb Explore: Smart Contracts & Protocols",
-  },
-};
-
-export async function generateMetadatra(
+export async function generateMetadata(
   props: ExploreCategoryPageProps,
 ): Promise<Metadata> {
-  const category = getCategory(props.params.category);
+  const params = await props.params;
+  const category = getCategory(params.category);
   if (!category) {
     notFound();
   }
@@ -45,7 +40,8 @@ export async function generateMetadatra(
 export default async function ExploreCategoryPage(
   props: ExploreCategoryPageProps,
 ) {
-  const category = getCategory(props.params.category);
+  const params = await props.params;
+  const category = getCategory(params.category);
   if (!category) {
     notFound();
   }
@@ -101,35 +97,36 @@ export default async function ExploreCategoryPage(
             }
 
             return (
-              <ContractCard
+              <Suspense
+                fallback={<ContractCardSkeleton />}
                 key={publisher + contractId + overrides?.title}
-                publisher={publisher}
-                contractId={contractId}
-                titleOverride={overrides?.title}
-                descriptionOverride={overrides?.description}
-                tracking={{
-                  source: category.id,
-                  itemIndex: `${idx}`,
-                }}
-                isBeta={category.isBeta}
-                modules={
-                  modules?.length
-                    ? modules.map((m) => ({
-                        publisher: m.split("/")[0] || "",
-                        moduleId: m.split("/")[1] || "",
-                      }))
-                    : undefined
-                }
-              />
+              >
+                <ContractCard
+                  publisher={publisher}
+                  contractId={contractId}
+                  titleOverride={overrides?.title}
+                  descriptionOverride={overrides?.description}
+                  tracking={{
+                    source: category.id,
+                    itemIndex: `${idx}`,
+                  }}
+                  isBeta={category.isBeta}
+                  modules={
+                    modules?.length
+                      ? modules.map((m) => ({
+                          publisher: m.split("/")[0] || "",
+                          moduleId: m.split("/")[1] || "",
+                        }))
+                      : undefined
+                  }
+                />
+              </Suspense>
             );
           })}
         </div>
 
         <div className="h-16" />
-        {/* TODO: remove this once we update the deploy upsell card */}
-        <ChakraProviderSetup>
-          <DeployUpsellCard />
-        </ChakraProviderSetup>
+        <DeployUpsellCard />
       </div>
     </div>
   );

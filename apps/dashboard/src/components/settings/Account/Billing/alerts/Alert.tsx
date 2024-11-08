@@ -1,25 +1,25 @@
 "use client";
-
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { TrackedLinkTW } from "@/components/ui/tracked-link";
 import { cn } from "@/lib/utils";
 import {
   type Account,
-  AccountStatus,
   type UsageBillableByService,
+  accountStatus,
   useAccount,
   useAccountUsage,
 } from "@3rdweb-sdk/react/hooks/useApi";
 import { useLoggedInUser } from "@3rdweb-sdk/react/hooks/useLoggedInUser";
-import { useDisclosure } from "@chakra-ui/react";
+import * as Sentry from "@sentry/nextjs";
 import { OnboardingModal } from "components/onboarding/Modal";
 import { format } from "date-fns";
 import { useTrack } from "hooks/analytics/useTrack";
 import { useLocalStorage } from "hooks/useLocalStorage";
 import { ExternalLinkIcon, XIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { LazyOnboardingBilling } from "../../../../onboarding/LazyOnboardingBilling";
 import { ManageBillingButton } from "../ManageButton";
 import { RecurringPaymentFailureAlert } from "./RecurringPaymentFailureAlert";
@@ -45,11 +45,9 @@ export const BillingAlerts = (props: {
   const usageQuery = useAccountUsage();
   const meQuery = useAccount({
     refetchInterval: (account) =>
-      [
-        AccountStatus.InvalidPayment,
-        AccountStatus.InvalidPaymentMethod,
-        AccountStatus.PaymentVerification,
-      ].includes(account.state.data?.status as AccountStatus)
+      account.state.data?.status === accountStatus.invalidPayment ||
+      account.state.data?.status === accountStatus.invalidPaymentMethod ||
+      account.state.data?.status === accountStatus.paymentVerification
         ? 1000
         : false,
   });
@@ -112,7 +110,7 @@ export function BillingAlertsUI(props: {
     const paymentFailureAlerts: AlertConditionType[] = [
       {
         shouldShowAlert:
-          dashboardAccount.status === AccountStatus.PaymentVerification,
+          dashboardAccount.status === accountStatus.paymentVerification,
         key: "verifyPaymentAlert",
         title: "Your payment method requires verification",
         description:
@@ -122,7 +120,7 @@ export function BillingAlertsUI(props: {
       },
       {
         shouldShowAlert:
-          dashboardAccount.status === AccountStatus.InvalidPaymentMethod,
+          dashboardAccount.status === accountStatus.invalidPaymentMethod,
         key: "invalidPaymentMethodAlert",
         title: "Your payment method is invalid",
         description:
@@ -162,7 +160,7 @@ export function BillingAlertsUI(props: {
       usage.storage.sumFileSizeBytes >= limits.storage;
 
     const hasHardLimits =
-      dashboardAccount.status !== AccountStatus.ValidPayment;
+      dashboardAccount.status !== accountStatus.validPayment;
     const isFreePlan = dashboardAccount.plan === "free";
     const isGrowthPlan = dashboardAccount.plan === "growth";
     const usageAlerts: AlertConditionType[] = [
@@ -268,7 +266,7 @@ export function BillingAlertsUI(props: {
                 title={alert.title}
                 description={alert.description}
                 ctaText="Verify payment method"
-                ctaHref="/dashboard/settings/billing"
+                ctaHref="/team/~/~/settings/billing"
                 label="verifyPaymentAlert"
                 dashboardAccount={dashboardAccount}
               />
@@ -284,7 +282,7 @@ export function BillingAlertsUI(props: {
                 title={alert.title}
                 description={alert.description}
                 ctaText="Upgrade your plan"
-                ctaHref="/dashboard/settings/billing"
+                ctaHref="/team/~/~/settings/billing"
                 label="upgradePlanAlert"
                 dashboardAccount={dashboardAccount}
               />
@@ -301,7 +299,9 @@ export function BillingAlertsUI(props: {
   }
 
   return (
-    <div className={cn("flex flex-col gap-4", props.className)}>{alerts}</div>
+    <ErrorBoundary FallbackComponent={BillingAlertsErrorBoundary}>
+      <div className={cn("flex flex-col gap-4", props.className)}>{alerts}</div>
+    </ErrorBoundary>
   );
 }
 
@@ -323,7 +323,7 @@ const AddPaymentNotification: React.FC<AddPaymentNotificationProps> = ({
   title,
   description = "To ensure there are no future interruptions to your services, please add your payment method.",
   ctaText = "Add a payment method",
-  ctaHref = "/dashboard/settings/billing",
+  ctaHref = "/team/~/~/settings/billing",
   label = "addPaymentAlert",
   showCTAs = true,
   dashboardAccount,
@@ -331,19 +331,14 @@ const AddPaymentNotification: React.FC<AddPaymentNotificationProps> = ({
   // TODO: We should find a way to move this deeper into the
   // TODO: ManageBillingButton component and set an optional field to override
   const [paymentMethodSaving, setPaymentMethodSaving] = useState(false);
-
-  const {
-    onOpen: onPaymentMethodOpen,
-    onClose: onPaymentMethodClose,
-    isOpen: isPaymentMethodOpen,
-  } = useDisclosure();
+  const [isPaymentMethodOpen, setIsPaymentMethodOpen] = useState(false);
 
   const handlePaymentAdded = () => {
     setPaymentMethodSaving(true);
-    onPaymentMethodClose();
+    setIsPaymentMethodOpen(false);
   };
 
-  const isBilling = ctaHref === "/dashboard/settings/billing";
+  const isBilling = ctaHref === "/team/~/~/settings/billing";
 
   return (
     <Alert
@@ -353,7 +348,7 @@ const AddPaymentNotification: React.FC<AddPaymentNotificationProps> = ({
       <OnboardingModal isOpen={isPaymentMethodOpen}>
         <LazyOnboardingBilling
           onSave={handlePaymentAdded}
-          onCancel={onPaymentMethodClose}
+          onCancel={() => setIsPaymentMethodOpen(false)}
         />
       </OnboardingModal>
 
@@ -361,13 +356,13 @@ const AddPaymentNotification: React.FC<AddPaymentNotificationProps> = ({
       <AlertDescription>{description}</AlertDescription>
 
       {showCTAs && (
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex flex-col gap-3 md:flex-row">
           {isBilling ? (
             <ManageBillingButton
               account={dashboardAccount}
               loading={paymentMethodSaving}
               loadingText="Verifying payment method"
-              onClick={onPaymentMethodOpen}
+              onClick={() => setIsPaymentMethodOpen(true)}
             />
           ) : (
             <Button variant="outline" asChild>
@@ -412,3 +407,17 @@ const AddPaymentNotification: React.FC<AddPaymentNotificationProps> = ({
     </Alert>
   );
 };
+
+function BillingAlertsErrorBoundary(errorProps: FallbackProps) {
+  // eslint-disable-next-line no-restricted-syntax
+  useEffect(() => {
+    Sentry.withScope((scope) => {
+      scope.setTag("component-crashed", "true");
+      scope.setTag("component-crashed-boundary", "BillingAlertsErrorBoundary");
+      scope.setLevel("fatal");
+      Sentry.captureException(errorProps.error);
+    });
+  }, [errorProps.error]);
+
+  return null;
+}

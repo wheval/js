@@ -1,13 +1,14 @@
 import { SidebarLayout } from "@/components/blocks/SidebarLayout";
+import { BillingAlerts } from "components/settings/Account/Billing/alerts/Alert";
 
-export default function Layout(props: {
+export default async function Layout(props: {
   children: React.ReactNode;
-  params: {
+  params: Promise<{
     team_slug: string;
     project_slug: string;
-  };
+  }>;
 }) {
-  const { project_slug, team_slug } = props.params;
+  const { project_slug, team_slug } = await props.params;
   const layoutPath = `/team/${team_slug}/${project_slug}/settings`;
 
   return (
@@ -40,6 +41,7 @@ export default function Layout(props: {
           },
         ]}
       >
+        <BillingAlerts className="mb-10" />
         {props.children}
       </SidebarLayout>
     </div>

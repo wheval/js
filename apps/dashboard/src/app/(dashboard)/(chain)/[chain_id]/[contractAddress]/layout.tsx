@@ -1,74 +1,91 @@
-import { ChakraProviderSetup } from "@/components/ChakraProviderSetup";
-import { SidebarLayout } from "@/components/blocks/SidebarLayout";
-import { ContractMetadata } from "components/custom-contract/contract-header/contract-metadata";
-import { DeprecatedAlert } from "components/shared/DeprecatedAlert";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { localhost } from "thirdweb/chains";
 import { getContractMetadata } from "thirdweb/extensions/common";
+import { isAddress, isContractDeployed } from "thirdweb/utils";
 import { resolveFunctionSelectors } from "../../../../../lib/selectors";
 import { shortenIfAddress } from "../../../../../utils/usedapp-external";
-import { ConfigureCustomChain } from "./ConfigureCustomChain";
-import { PrimaryDashboardButton } from "./_components/primary-dashboard-button";
+import { ConfigureCustomChain } from "./_layout/ConfigureCustomChain";
+import { getContractMetadataHeaderData } from "./_layout/contract-metadata";
+import { ContractPageLayout } from "./_layout/contract-page-layout";
+import { ContractPageLayoutClient } from "./_layout/contract-page-layout.client";
 import { supportedERCs } from "./_utils/detectedFeatures/supportedERCs";
 import { getContractPageParamsInfo } from "./_utils/getContractFromParams";
 import { getContractPageMetadata } from "./_utils/getContractPageMetadata";
 import { getContractPageSidebarLinks } from "./_utils/getContractPageSidebarLinks";
 
 export default async function Layout(props: {
-  params: {
+  params: Promise<{
     contractAddress: string;
     chain_id: string;
-  };
+  }>;
   children: React.ReactNode;
 }) {
-  const info = await getContractPageParamsInfo(props.params);
+  const params = await props.params;
+  if (!isAddress(params.contractAddress)) {
+    return notFound();
+  }
+
+  const info = await getContractPageParamsInfo(params);
 
   if (!info) {
-    return <ConfigureCustomChain chainSlug={props.params.chain_id} />;
+    return <ConfigureCustomChain chainSlug={params.chain_id} />;
   }
 
   const { contract, chainMetadata } = info;
+
+  if (chainMetadata.status === "deprecated") {
+    notFound();
+  }
+
+  if (contract.chain.id === localhost.id) {
+    return (
+      <ContractPageLayoutClient
+        chainMetadata={chainMetadata}
+        contract={contract}
+      >
+        {props.children}
+      </ContractPageLayoutClient>
+    );
+  }
+
+  // check if the contract exists
+  const isValidContract = await isContractDeployed(contract).catch(() => false);
+  if (!isValidContract) {
+    // TODO - replace 404 with a better page to upsale deploy or other thirdweb products
+    notFound();
+  }
   const contractPageMetadata = await getContractPageMetadata(contract);
+
   const sidebarLinks = getContractPageSidebarLinks({
     chainSlug: chainMetadata.slug,
     contractAddress: contract.address,
     metadata: contractPageMetadata,
   });
 
+  const { contractMetadata, externalLinks } =
+    await getContractMetadataHeaderData(contract);
+
   return (
-    <ChakraProviderSetup>
-      <SidebarLayout sidebarLinks={sidebarLinks}>
-        <div className="border-border border-b pb-8">
-          <div className="flex flex-col gap-4 ">
-            <div className="flex flex-col justify-between gap-4 md:flex-row">
-              <ContractMetadata contract={contract} chain={chainMetadata} />
-              <PrimaryDashboardButton
-                contractAddress={contract.address}
-                chain={contract.chain}
-                contractInfo={{
-                  chain: chainMetadata,
-                  chainSlug: chainMetadata.slug,
-                  contractAddress: contract.address,
-                }}
-              />
-            </div>
-            <DeprecatedAlert chain={chainMetadata} />
-          </div>
-        </div>
-        <div className="h-8" />
-        <div className="pb-10">{props.children}</div>
-      </SidebarLayout>
-    </ChakraProviderSetup>
+    <ContractPageLayout
+      chainMetadata={chainMetadata}
+      contract={contract}
+      sidebarLinks={sidebarLinks}
+      dashboardContractMetadata={contractMetadata}
+      externalLinks={externalLinks}
+    >
+      {props.children}
+    </ContractPageLayout>
   );
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: {
+export async function generateMetadata(props: {
+  params: Promise<{
     contractAddress: string;
     chain_id: string;
-  };
+  }>;
 }): Promise<Metadata> {
+  const params = await props.params;
   try {
     const info = await getContractPageParamsInfo(params);
 

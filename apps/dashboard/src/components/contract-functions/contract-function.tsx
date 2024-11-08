@@ -1,5 +1,7 @@
 "use client";
 
+import { CopyTextButton } from "@/components/ui/CopyTextButton";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useDashboardRouter } from "@/lib/DashboardRouter";
 import { cn } from "@/lib/utils";
@@ -27,14 +29,20 @@ import type { AbiEvent, AbiFunction } from "abitype";
 import { camelToTitle } from "contract-ui/components/solidity-inputs/helpers";
 import { SearchIcon } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { type Dispatch, type SetStateAction, useMemo, useState } from "react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  lazy,
+  useMemo,
+  useState,
+} from "react";
 import type { ThirdwebContract } from "thirdweb";
 import * as ERC20Ext from "thirdweb/extensions/erc20";
 import * as ERC721Ext from "thirdweb/extensions/erc721";
 import * as ERC1155Ext from "thirdweb/extensions/erc1155";
 import { useReadContract } from "thirdweb/react";
 import { toFunctionSelector } from "thirdweb/utils";
-import { Badge, Button, Card, Heading, Text } from "tw-components";
+import { Button, Card, Heading, Text } from "tw-components";
 import { useDebounce } from "use-debounce";
 import { useContractFunctionSelectors } from "../../contract-ui/hooks/useContractFunctionSelectors";
 import {
@@ -45,6 +53,9 @@ import { CodeSegment } from "../contract-tabs/code/CodeSegment";
 import type { CodeEnvironment } from "../contract-tabs/code/types";
 import { InteractiveAbiFunction } from "./interactive-abi-function";
 
+const ContractFunctionComment = lazy(
+  () => import("./contract-function-comment"),
+);
 interface ContractFunctionProps {
   fn: AbiFunction | AbiEvent;
   contract: ThirdwebContract;
@@ -85,6 +96,11 @@ function ContractFunctionInner({ contract, fn }: ContractFunctionProps) {
     return undefined;
   }, [isERC20, isERC721Query.data, isERC1155Query.data]);
 
+  const functionSelector = useMemo(
+    () => (fn?.type === "function" ? toFunctionSelector(fn) : undefined),
+    [fn],
+  );
+
   if (!fn) {
     return null;
   }
@@ -111,24 +127,24 @@ function ContractFunctionInner({ contract, fn }: ContractFunctionProps) {
 
   return (
     <Flex direction="column" gap={1.5}>
-      <Flex
-        alignItems={{ base: "start", md: "center" }}
-        gap={2}
-        direction={{ base: "column", md: "row" }}
-      >
+      <Flex alignItems="center" gap={2} direction="row" flexWrap="wrap">
         <Flex alignItems="baseline" gap={1} flexWrap="wrap">
           <Heading size="subtitle.md">{camelToTitle(fn.name)}</Heading>
           <Heading size="subtitle.sm" className="text-muted-foreground">
             ({fn.name})
           </Heading>
         </Flex>
-        {isFunction && (
-          <Badge size="label.sm" variant="subtle" colorScheme="green">
-            {fn.stateMutability}
-          </Badge>
+        {isFunction && <Badge variant="success">{fn.stateMutability}</Badge>}
+        {functionSelector && (
+          <CopyTextButton
+            textToCopy={functionSelector}
+            textToShow={functionSelector}
+            copyIconPosition="right"
+            tooltip="The selector of this function"
+            className="ml-auto text-xs"
+          />
         )}
       </Flex>
-
       {isFunction && (
         <InteractiveAbiFunction
           key={JSON.stringify(fn)}
@@ -150,6 +166,7 @@ function ContractFunctionInner({ contract, fn }: ContractFunctionProps) {
           />
         </>
       )}
+      <ContractFunctionComment contract={contract} functionName={fn.name} />
     </Flex>
   );
 }
@@ -173,11 +190,7 @@ function ContractFunctionInputs(props: {
             ({fn.name})
           </Heading>
         </Flex>
-        {isFunction && (
-          <Badge size="label.sm" variant="subtle" colorScheme="green">
-            {fn.stateMutability}
-          </Badge>
-        )}
+        {isFunction && <Badge variant="success">{fn.stateMutability}</Badge>}
       </Flex>
 
       {fn.inputs?.length ? (

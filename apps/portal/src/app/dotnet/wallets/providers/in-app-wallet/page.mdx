@@ -15,7 +15,7 @@ Create an instance of `InAppWallet` using a user's email, phone number or OAuth.
 In-App Wallets support a variety of login methods:
 - Email (OTP Login)
 - Phone (OTP Login)
-- Socials (Google, Apple, Facebook, Telegram, Farcaster, Line etc.)
+- Socials (Google, Apple, Facebook, Telegram, Farcaster, Line, Github, Twitch etc.)
 - SIWE (Sign-In with Ethereum)
 - Custom Auth (OIDC Compatible)
 - Custom Auth (Generic Auth Endpoint)
@@ -64,10 +64,10 @@ var address = await wallet.LoginWithOauth(
 var address = await siweWallet.LoginWithSiwe(chainId: 1);
 
 // Custom Auth (JWT)
-var address = await wallet.LoginWithCustomAuth(jwt: "myjwt", encryptionkey: "myencryptionkey");
+var address = await wallet.LoginWithCustomAuth(jwt: "myjwt");
 
 // Custom Auth (AuthEndpoint)
-var address = await wallet.LoginWithAuthEndpoint(payload: "mypayload", encryptionkey: "myencryptionkey");
+var address = await wallet.LoginWithAuthEndpoint(payload: "mypayload");
 
 // Guest Login (Easy onboarding)
 var address = await wallet.LoginWithGuest();

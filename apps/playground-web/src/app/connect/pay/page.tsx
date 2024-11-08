@@ -1,11 +1,9 @@
+import { APIHeader } from "@/components/blocks/APIHeader";
+import { CodeExample } from "@/components/code/code-example";
+import { StyledPayEmbedPreview } from "@/components/pay/embed";
 import ThirdwebProvider from "@/components/thirdweb-provider";
 import { metadataBase } from "@/lib/constants";
 import type { Metadata } from "next";
-import { APIHeader } from "../../../components/blocks/APIHeader";
-import { CodeExample } from "../../../components/code/code-example";
-import { BuyMerchPreview } from "../../../components/pay/direct-payment";
-import { StyledPayEmbedPreview } from "../../../components/pay/embed";
-import { PayTransactionButtonPreview } from "../../../components/pay/transaction-button";
 
 export const metadata: Metadata = {
   metadataBase,
@@ -19,7 +17,7 @@ export default function Page() {
     <ThirdwebProvider>
       <main className="container px-0 pb-20">
         <APIHeader
-          title="The easiest way for users to transact in your app"
+          title="The easiest way for users to fund their wallets"
           description={
             <>
               Onramp users with credit card &amp; cross-chain crypto payments —
@@ -32,18 +30,6 @@ export default function Page() {
 
         <section className="space-y-8">
           <StyledPayEmbed />
-        </section>
-
-        <div className="h-14" />
-
-        <section className="space-y-8">
-          <BuyMerch />
-        </section>
-
-        <div className="h-14" />
-
-        <section className="space-y-8">
-          <BuyOnchainAsset />
         </section>
       </main>
     </ThirdwebProvider>
@@ -73,109 +59,19 @@ function StyledPayEmbed() {
           return (
             <PayEmbed
               client={client}
-            />
-          );
-        };`}
-        lang="tsx"
-      />
-    </>
-  );
-}
-
-function BuyMerch() {
-  return (
-    <>
-      <div className="space-y-2">
-        <h2 className="font-semibold text-2xl tracking-tight sm:text-3xl">
-          Commerce
-        </h2>
-        <p className="max-w-[600px]">
-          Take paymets from Fiat or Crypto directly to your seller wallet.
-          <br />
-          Get notified for every sale through webhooks, which lets you trigger
-          any action you want like shipping physical goods, activating services
-          or doing onchain actions.
-        </p>
-      </div>
-
-      <CodeExample
-        preview={<BuyMerchPreview />}
-        code={`import { PayEmbed, getDefaultToken } from "thirdweb/react";
-          import { base } from "thirdweb/chains";
-
-        function App() {
-          return (
-            <PayEmbed
-              client={client}
-              theme={"light"}
               payOptions={{
-                mode: "direct_payment",
-                paymentInfo: {
-                  amount: "35",
-                  chain: base,
-                  token: getDefaultToken(base, "USDC"),
-                  sellerAddress: "0xEb0effdFB4dC5b3d5d3aC6ce29F3ED213E95d675",
-                },
+                mode: "fund_wallet",
                 metadata: {
-                  name: "Black Hoodie (Size L)",
-                  image: "/drip-hoodie.png",
+                  name: "Get funds",
                 },
+                prefillBuy: {
+                  chain: base,
+                  amount: "0.01",
+                },
+                // ... theme, currency, amounts, payment methods, etc.
               }}
-            />
-          );
-        };`}
-        lang="tsx"
-      />
-    </>
-  );
-}
-
-function BuyOnchainAsset() {
-  return (
-    <>
-      <div className="space-y-2">
-        <h2 className="font-semibold text-2xl tracking-tight sm:text-3xl">
-          Transactions
-        </h2>
-        <p className="max-w-[600px]">
-          Let your users pay for onchain transactions with fiat or crypto on any
-          chain.
-          <br />
-          Amounts are calculated automatically from the transaction, and will
-          get executed after the user has obtained the necessary funds via
-          onramp or swap.
-        </p>
-      </div>
-
-      <CodeExample
-        preview={<PayTransactionButtonPreview />}
-        code={`import { claimTo } from "thirdweb/extensions/erc1155";
-          import { PayEmbed, useActiveAccount } from "thirdweb/react";
-
-
-        function App() {
-          const account = useActiveAccount();
-          const { data: nft } = useReadContract(getNFT, {
-            contract: nftContract,
-            tokenId: 0n,
-          });
-
-
-          return (
-            <PayEmbed
-              client={client}
-              payOptions={{
-                mode: "transaction",
-                transaction: claimTo({
-                  contract: nftContract,
-                  quantity: 1n,
-                  tokenId: 0n,
-                  to: account?.address,
-                }),
-                metadata: nft?.metadata,
-              }}
-            />
-          );
+          />
+        );
         };`}
         lang="tsx"
       />

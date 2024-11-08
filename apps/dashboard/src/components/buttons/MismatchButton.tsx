@@ -51,6 +51,7 @@ import {
 } from "thirdweb/react";
 import { privateKeyToAccount } from "thirdweb/wallets";
 import { Button, type ButtonProps, Card, Heading, Text } from "tw-components";
+import { getFaucetClaimAmount } from "../../app/api/testnet-faucet/claim/claim-amount";
 import { THIRDWEB_API_HOST } from "../../constants/urls";
 import { useAllChainsData } from "../../hooks/chains/allChains";
 import { useV5DashboardChain } from "../../lib/v5-adapter";
@@ -58,6 +59,7 @@ import { useV5DashboardChain } from "../../lib/v5-adapter";
 const GAS_FREE_CHAINS = [
   75513, // Geek verse testnet
   75512, // Geek verse mainnet
+  531050104, // sophon testnet
 ];
 
 function useNetworkMismatchAdapter(desiredChainId: number) {
@@ -93,10 +95,19 @@ export const MismatchButton = forwardRef<
 
   const chainId = activeWalletChain?.id;
 
-  const eventRef = useRef<React.MouseEvent<HTMLButtonElement, MouseEvent>>();
+  const eventRef =
+    useRef<React.MouseEvent<HTMLButtonElement, MouseEvent>>(undefined);
+
   if (!wallet || !chainId) {
     return (
-      <CustomConnectWallet borderRadius="md" colorScheme="primary" {...props} />
+      <CustomConnectWallet
+        borderRadius="md"
+        colorScheme="primary"
+        {...props}
+        signInLinkButtonClassName={
+          props.size === "sm" ? "!py-2 !h-auto" : undefined
+        }
+      />
     );
   }
   const notEnoughBalance =
@@ -104,6 +115,7 @@ export const MismatchButton = forwardRef<
   return (
     <>
       <Popover
+        // @ts-expect-error - this works fine
         initialFocusRef={initialFocusRef}
         isLazy
         isOpen={isOpen}
@@ -354,8 +366,7 @@ function NoFundsDialogContent(props: {
 function GetFundsFromFaucet(props: {
   chain: ChainMetadata;
 }) {
-  // TODO - improvement for later -> estimate gas required for transaction, and use that as the amount to give
-  const amountToGive = "0.01";
+  const amountToGive = getFaucetClaimAmount(props.chain.chainId);
 
   return (
     <div className="flex justify-center rounded-lg border border-border px-4 py-6">
@@ -389,7 +400,7 @@ function GetFundsFromFaucet(props: {
 }
 
 const MismatchNotice: React.FC<{
-  initialFocusRef: React.RefObject<HTMLButtonElement>;
+  initialFocusRef: React.RefObject<HTMLButtonElement | null>;
   onClose: (hasSwitched: boolean) => void;
   desiredChainId: number;
 }> = ({ initialFocusRef, onClose, desiredChainId }) => {

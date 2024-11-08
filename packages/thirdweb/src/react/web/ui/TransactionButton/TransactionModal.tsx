@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { trackPayEvent } from "../../../../analytics/track.js";
+import { trackPayEvent } from "../../../../analytics/track/pay.js";
 import type { ThirdwebClient } from "../../../../client/client.js";
 import type { WaitForReceiptOptions } from "../../../../transaction/actions/wait-for-tx-receipt.js";
 import type { PreparedTransaction } from "../../../../transaction/prepare-transaction.js";
@@ -42,6 +42,7 @@ export function TransactionModal(props: ModalProps) {
         client: props.client,
         walletAddress: account.address,
         walletType: wallet.id,
+        dstChainId: props.tx.chain.id,
         event: "open_pay_transaction_modal",
       });
     },

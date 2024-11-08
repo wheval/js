@@ -2,42 +2,58 @@
 
 import { WalletAddress } from "@/components/blocks/wallet-address";
 import { PaginationButtons } from "@/components/pagination-buttons";
+import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import {
-  type EmbeddedWalletUser,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  useAllEmbeddedWallets,
   useEmbeddedWallets,
 } from "@3rdweb-sdk/react/hooks/useEmbeddedWallets";
 import { createColumnHelper } from "@tanstack/react-table";
 import { TWTable } from "components/shared/TWTable";
 import { format } from "date-fns/format";
 import Papa from "papaparse";
-import { useCallback, useMemo, useState } from "react";
-import { withinDays } from "utils/date-utils";
+import { useCallback, useState } from "react";
+import type { WalletUser } from "thirdweb/wallets";
 
-const ACTIVE_THRESHOLD_DAYS = 30;
+const getUserIdentifier = (accounts: WalletUser["linkedAccounts"]) => {
+  const mainDetail = accounts[0]?.details;
+  return (
+    mainDetail?.email ??
+    mainDetail?.phone ??
+    mainDetail?.address ??
+    mainDetail?.id
+  );
+};
 
-const columnHelper = createColumnHelper<EmbeddedWalletUser>();
-
+const columnHelper = createColumnHelper<WalletUser>();
 const columns = [
-  columnHelper.accessor("ews_authed_user", {
-    header: "Email",
+  columnHelper.accessor("linkedAccounts", {
+    header: "User Identifier",
     enableColumnFilter: true,
-    cell: (cell) => (
-      <span className="text-sm">{cell.getValue()?.[0]?.email}</span>
-    ),
+    cell: (cell) => {
+      const identifier = getUserIdentifier(cell.getValue());
+      return <span className="text-sm">{identifier}</span>;
+    },
+    id: "user_identifier",
   }),
-  columnHelper.accessor("embedded_wallet", {
+  columnHelper.accessor("wallets", {
     header: "Address",
     cell: (cell) => {
-      const address = cell.getValue()?.[0]?.address;
+      const address = cell.getValue()[0]?.address;
       return address ? <WalletAddress address={address} /> : null;
     },
+    id: "address",
   }),
-  columnHelper.accessor("created_at", {
+  columnHelper.accessor("wallets", {
     header: "Created",
     cell: (cell) => {
-      const value = cell.getValue();
+      const value = cell.getValue()[0]?.createdAt;
 
       if (!value) {
         return;
@@ -48,21 +64,36 @@ const columns = [
         </span>
       );
     },
+    id: "created_at",
   }),
-  columnHelper.accessor("last_accessed_at", {
-    header: "Last login",
+  columnHelper.accessor("linkedAccounts", {
+    header: "Login Methods",
     cell: (cell) => {
       const value = cell.getValue();
-
-      if (!value) {
-        return;
-      }
+      const loginMethodsDisplay = value.reduce((acc, curr) => {
+        if (acc.length === 2) {
+          acc.push("...");
+        }
+        if (acc.length < 2) {
+          acc.push(curr.type);
+        }
+        return acc;
+      }, [] as string[]);
+      const loginMethods = value.map((v) => v.type).join(", ");
       return (
-        <span className="text-sm">
-          {format(new Date(value), "MMM dd, yyyy")}
-        </span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger className="text-sm">
+              {loginMethodsDisplay.join(", ")}
+            </TooltipTrigger>
+            <TooltipContent>
+              <span className="text-sm">{loginMethods}</span>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     },
+    id: "login_methods",
   }),
 ];
 
@@ -70,38 +101,34 @@ export const InAppWalletUsersPageContent = (props: {
   clientId: string;
   trackingCategory: string;
 }) => {
-  const [onlyActive, setOnlyActive] = useState(true);
-  const walletsQuery = useEmbeddedWallets(props.clientId);
-  const wallets = walletsQuery?.data || [];
+  const [activePage, setActivePage] = useState(1);
+  const walletsQuery = useEmbeddedWallets(props.clientId, activePage);
+  const { users: wallets, totalPages } = walletsQuery?.data || {
+    users: [],
+    totalPages: 1,
+  };
+  const { mutateAsync: getAllEmbeddedWallets, isPending } =
+    useAllEmbeddedWallets();
 
-  const activeWallets = useMemo(() => {
-    if (!wallets) {
-      return [];
-    }
-
-    return wallets.filter((w) => {
-      const lastAccessedAt = w.last_accessed_at;
-      return (
-        lastAccessedAt && withinDays(lastAccessedAt, ACTIVE_THRESHOLD_DAYS)
-      );
-    });
-  }, [wallets]);
-
-  const theWalletsWeWant = useMemo(() => {
-    return (onlyActive ? activeWallets : wallets) ?? [];
-  }, [activeWallets, onlyActive, wallets]);
-
-  const downloadCSV = useCallback(() => {
-    if (theWalletsWeWant.length === 0) {
+  const downloadCSV = useCallback(async () => {
+    if (wallets.length === 0 || !getAllEmbeddedWallets) {
       return;
     }
+    const usersWallets = await getAllEmbeddedWallets({
+      clientId: props.clientId,
+      totalPages,
+    });
     const csv = Papa.unparse(
-      theWalletsWeWant.map((row) => ({
-        email: row.ews_authed_user[0]?.email,
-        address: row.embedded_wallet?.[0]?.address || "",
-        created: format(new Date(row.created_at), "MMM dd, yyyy"),
-        last_login: format(new Date(row.last_accessed_at), "MMM dd, yyyy"),
-      })),
+      usersWallets.map((row) => {
+        return {
+          user_identifier: getUserIdentifier(row.linkedAccounts),
+          address: row.wallets[0]?.address || "Uninitialized",
+          created: row.wallets[0]?.createdAt
+            ? format(new Date(row.wallets[0].createdAt), "MMM dd, yyyy")
+            : "Wallet not created yet",
+          login_methods: row.linkedAccounts.map((acc) => acc.type).join(", "),
+        };
+      }),
     );
     const csvUrl = URL.createObjectURL(
       new Blob([csv], { type: "text/csv;charset=utf-8;" }),
@@ -110,20 +137,7 @@ export const InAppWalletUsersPageContent = (props: {
     tempLink.href = csvUrl;
     tempLink.setAttribute("download", "download.csv");
     tempLink.click();
-  }, [theWalletsWeWant]);
-
-  const [activePage, setActivePage] = useState(1);
-  const itemsPerPage = 20;
-  const totalPages =
-    theWalletsWeWant.length <= itemsPerPage
-      ? 1
-      : Math.ceil(theWalletsWeWant.length / itemsPerPage);
-
-  const itemsToShow = useMemo(() => {
-    const startIndex = (activePage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return theWalletsWeWant.slice(startIndex, endIndex);
-  }, [activePage, theWalletsWeWant]);
+  }, [wallets, props.clientId, totalPages, getAllEmbeddedWallets]);
 
   return (
     <div>
@@ -131,29 +145,31 @@ export const InAppWalletUsersPageContent = (props: {
         {/* Top section */}
         <div className="flex items-center justify-between">
           <Button
-            disabled={theWalletsWeWant.length === 0}
+            disabled={wallets.length === 0 || isPending}
             variant="outline"
             onClick={downloadCSV}
             size="sm"
+            className="gap-2"
           >
+            {isPending && <Spinner className="size-4" />}
             Download as .csv
           </Button>
 
           <div className="flex items-center justify-end gap-2">
-            <p className="text-muted-foreground text-sm">
-              Active last {ACTIVE_THRESHOLD_DAYS} days
-            </p>
-            <Switch
-              checked={onlyActive}
-              onCheckedChange={(v) => setOnlyActive(v)}
-              disabled={wallets.length === 0}
-            />
+            {walletsQuery.isPlaceholderData && (
+              <>
+                <Spinner className="size-4" />
+                <p className="text-muted-foreground text-sm">
+                  Loading page {activePage} of {totalPages}
+                </p>
+              </>
+            )}
           </div>
         </div>
 
         <TWTable
-          title="active in-app wallets"
-          data={itemsToShow}
+          title="in-app wallets"
+          data={wallets}
           columns={columns}
           isPending={walletsQuery.isPending}
           isFetched={walletsQuery.isFetched}

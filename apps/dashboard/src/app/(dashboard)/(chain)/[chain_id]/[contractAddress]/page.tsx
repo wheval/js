@@ -1,21 +1,35 @@
 import { notFound } from "next/navigation";
+import { ErrorBoundary } from "react-error-boundary";
+import { localhost } from "thirdweb/chains";
 import { getContractPageParamsInfo } from "./_utils/getContractFromParams";
 import { getContractPageMetadata } from "./_utils/getContractPageMetadata";
 import { ContractOverviewPage } from "./overview/ContractOverviewPage";
+import { PublishedBy } from "./overview/components/published-by.server";
+import { ContractOverviewPageClient } from "./overview/contract-overview-page.client";
 
 export default async function Page(props: {
-  params: {
+  params: Promise<{
     contractAddress: string;
     chain_id: string;
-  };
+  }>;
 }) {
-  const info = await getContractPageParamsInfo(props.params);
+  const params = await props.params;
+  const info = await getContractPageParamsInfo(params);
 
   if (!info) {
     notFound();
   }
 
   const { contract, chainMetadata } = info;
+  if (contract.chain.id === localhost.id) {
+    return (
+      <ContractOverviewPageClient
+        chainMetadata={chainMetadata}
+        contract={contract}
+      />
+    );
+  }
+
   const contractPageMetadata = await getContractPageMetadata(contract);
 
   return (
@@ -31,6 +45,12 @@ export default async function Page(props: {
       }
       chainSlug={chainMetadata.slug}
       isAnalyticsSupported={contractPageMetadata.isAnalyticsSupported}
+      functionSelectors={contractPageMetadata.functionSelectors}
+      publishedBy={
+        <ErrorBoundary fallback={null}>
+          <PublishedBy contract={contract} />
+        </ErrorBoundary>
+      }
     />
   );
 }

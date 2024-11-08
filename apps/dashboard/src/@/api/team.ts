@@ -13,17 +13,12 @@ export type Team = {
   bannedAt?: string;
   image?: string;
   billingPlan: "pro" | "growth" | "free";
-  billingStatus: "validPayment" | (string & {}); // what's the other value?
-  billingEmail: string;
-  // billingExternalId: string;
-  // billingType: "STRIPE" | ??
-  // billingCustomerPayload: ?? | null
-  // paymentAttemptCount: number
-  // trialPeriodEndedAt: string | null;
+  billingStatus: "validPayment" | (string & {}) | null;
+  billingEmail: string | null;
 };
 
 export async function getTeamBySlug(slug: string) {
-  const cookiesManager = cookies();
+  const cookiesManager = await cookies();
   const activeAccount = cookiesManager.get(COOKIE_ACTIVE_ACCOUNT)?.value;
   const token = activeAccount
     ? cookiesManager.get(COOKIE_PREFIX_TOKEN + activeAccount)?.value
@@ -45,7 +40,7 @@ export async function getTeamBySlug(slug: string) {
 }
 
 export async function getTeams() {
-  const cookiesManager = cookies();
+  const cookiesManager = await cookies();
   const activeAccount = cookiesManager.get(COOKIE_ACTIVE_ACCOUNT)?.value;
   const token = activeAccount
     ? cookiesManager.get(COOKIE_PREFIX_TOKEN + activeAccount)?.value

@@ -1,6 +1,3 @@
-"use client";
-
-import { PublishedBy } from "components/contract-components/shared/published-by";
 import type { ThirdwebContract } from "thirdweb";
 import { AnalyticsOverview } from "./components/Analytics";
 import { BuildYourApp } from "./components/BuildYourApp";
@@ -21,6 +18,8 @@ interface ContractOverviewPageProps {
   isPermissionsEnumerable: boolean;
   chainSlug: string;
   isAnalyticsSupported: boolean;
+  functionSelectors: string[];
+  publishedBy: React.ReactNode;
 }
 
 const TRACKING_CATEGORY = "contract_overview";
@@ -35,6 +34,8 @@ export const ContractOverviewPage: React.FC<ContractOverviewPageProps> = ({
   isPermissionsEnumerable,
   chainSlug,
   isAnalyticsSupported,
+  functionSelectors,
+  publishedBy,
 }) => {
   return (
     <div className="flex flex-col gap-8 lg:flex-row">
@@ -45,6 +46,7 @@ export const ContractOverviewPage: React.FC<ContractOverviewPageProps> = ({
           isErc20={isErc20}
           contract={contract}
           chainSlug={chainSlug}
+          functionSelectors={functionSelectors}
         />
 
         {isAnalyticsSupported && (
@@ -97,9 +99,7 @@ export const ContractOverviewPage: React.FC<ContractOverviewPageProps> = ({
           contractAddress={contract.address}
         />
       </div>
-      <div className="shrink-0 lg:w-[300px]">
-        <PublishedBy contract={contract} />
-      </div>
+      <div className="shrink-0 lg:w-[300px]">{publishedBy}</div>
     </div>
   );
 };

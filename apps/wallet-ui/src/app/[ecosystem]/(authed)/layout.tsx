@@ -1,14 +1,17 @@
 import ConnectButton from "@/components/ConnectButton";
 import { authedOnly } from "@/lib/auth";
 import { getEcosystemInfo } from "@/lib/ecosystems";
+import { resolveScheme } from "thirdweb/storage";
+import { client } from "../../../lib/client";
 
-export default async function Layout({
-  children,
-  params,
-}: {
+export default async function Layout(props: {
   children: React.ReactNode;
-  params: { ecosystem: string };
+  params: Promise<{ ecosystem: string }>;
 }) {
+  const params = await props.params;
+
+  const { children } = props;
+
   await authedOnly();
   const ecosystem = await getEcosystemInfo(params.ecosystem);
   return (
@@ -18,7 +21,7 @@ export default async function Layout({
           <div className="flex items-center gap-2">
             <img
               className="h-8 w-8"
-              src={ecosystem.imageUrl}
+              src={resolveScheme({ uri: ecosystem.imageUrl, client })}
               alt={ecosystem.name}
               width={100}
               height={100}

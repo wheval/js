@@ -1,7 +1,8 @@
+"use client";
+
 import { AdminOnly } from "@3rdweb-sdk/react/components/roles/admin-only";
 import { useIsMinter } from "@3rdweb-sdk/react/hooks/useContractRoles";
 import { StepsCard } from "components/dashboard/StepsCard";
-import { useContractFunctionSelectors } from "contract-ui/hooks/useContractFunctionSelectors";
 import Link from "next/link";
 import { useMemo } from "react";
 import type { ThirdwebContract } from "thirdweb";
@@ -18,6 +19,7 @@ interface ContractChecklistProps {
   isErc1155: boolean;
   isErc20: boolean;
   chainSlug: string;
+  functionSelectors: string[];
 }
 
 type Step = {
@@ -27,13 +29,10 @@ type Step = {
 };
 
 export const ContractChecklist: React.FC<ContractChecklistProps> = (props) => {
-  const functionSelectorQuery = useContractFunctionSelectors(props.contract);
   return (
     // if no permissions, simply return null (do not fail open)
     <AdminOnly contract={props.contract} failOpen={false}>
-      {!!functionSelectorQuery.data?.length && (
-        <Inner functionSelectors={functionSelectorQuery.data} {...props} />
-      )}
+      <Inner {...props} />
     </AdminOnly>
   );
 };
@@ -106,8 +105,9 @@ function Inner({
       // writes
       ERC721Ext.isSetClaimConditionsSupported(functionSelectors),
       ERC721Ext.isResetClaimEligibilitySupported(functionSelectors),
+      isErc721,
     ].every(Boolean);
-  }, [functionSelectors]);
+  }, [functionSelectors, isErc721]);
 
   const hasERC20ClaimConditions = useMemo(() => {
     return [
@@ -119,8 +119,9 @@ function Inner({
       // writes
       ERC20Ext.isSetClaimConditionsSupported(functionSelectors),
       ERC20Ext.isResetClaimEligibilitySupported(functionSelectors),
+      isErc20,
     ].every(Boolean);
-  }, [functionSelectors]);
+  }, [functionSelectors, isErc20]);
 
   const claimConditions = useReadContract(
     isErc721 ? ERC721Ext.getClaimConditions : ERC20Ext.getClaimConditions,
@@ -234,7 +235,7 @@ function Inner({
           (erc20Supply.data || 0n) > 0n,
       });
     }
-    if (hasERC721ClaimConditions) {
+    if (hasERC721ClaimConditions && isErc721) {
       steps.push({
         title: "First NFT claimed",
         children: (

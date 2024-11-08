@@ -1,18 +1,25 @@
 import { notFound, redirect } from "next/navigation";
+import { localhost } from "thirdweb/chains";
 import { getContractPageParamsInfo } from "../../_utils/getContractFromParams";
 import { getContractPageMetadata } from "../../_utils/getContractPageMetadata";
 import { ContractDirectListingsPage } from "./ContractDirectListingsPage";
+import { ContractDirectListingsPageClient } from "./ContractDirectListingsPage.client";
 
 export default async function Page(props: {
-  params: {
+  params: Promise<{
     contractAddress: string;
     chain_id: string;
-  };
+  }>;
 }) {
-  const info = await getContractPageParamsInfo(props.params);
+  const params = await props.params;
+  const info = await getContractPageParamsInfo(params);
 
   if (!info) {
     notFound();
+  }
+
+  if (info.chainMetadata.chainId === localhost.id) {
+    return <ContractDirectListingsPageClient contract={info.contract} />;
   }
 
   const { isDirectListingSupported } = await getContractPageMetadata(
@@ -20,7 +27,7 @@ export default async function Page(props: {
   );
 
   if (!isDirectListingSupported) {
-    redirect(`/${props.params.chain_id}/${props.params.contractAddress}`);
+    redirect(`/${params.chain_id}/${params.contractAddress}`);
   }
 
   return <ContractDirectListingsPage contract={info.contract} />;

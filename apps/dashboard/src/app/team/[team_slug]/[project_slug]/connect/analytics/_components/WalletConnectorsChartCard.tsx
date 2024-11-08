@@ -17,10 +17,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { WalletStats } from "@3rdweb-sdk/react/hooks/useApi";
+import {
+  EmptyChartState,
+  LoadingChartState,
+} from "components/analytics/empty-chart-state";
+import { ReactIcon } from "components/icons/brand-icons/ReactIcon";
+import { TypeScriptIcon } from "components/icons/brand-icons/TypeScriptIcon";
+import { DocLink } from "components/shared/DocLink";
 import { format } from "date-fns";
 import { useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
-import { EmptyChartState, LoadingChartState } from "./EmptyChartState";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  formatTickerNumber,
+  formatWalletType,
+} from "../../../../../../../lib/format-utils";
 
 type ChartToShow = "uniqueWalletsConnected" | "totalConnections";
 
@@ -54,7 +64,8 @@ export function WalletConnectorsChartCard(props: {
     // for each stat, add it in _chartDataMap
     for (const stat of walletStats) {
       const chartData = _chartDataMap.get(stat.date);
-      const { walletType } = stat;
+      const { walletType: rawWalletType } = stat;
+      const walletType = formatWalletType(rawWalletType);
 
       // if no data for current day - create new entry
       if (!chartData) {
@@ -166,7 +177,30 @@ export function WalletConnectorsChartCard(props: {
         {props.isPending ? (
           <LoadingChartState />
         ) : chartData.length === 0 ? (
-          <EmptyChartState />
+          <EmptyChartState>
+            <div className="flex flex-col items-center justify-center">
+              <span className="mb-6 text-lg">
+                Connect any wallet to your app
+              </span>
+              <div className="flex max-w-md flex-wrap items-center justify-center gap-x-6 gap-y-4">
+                <DocLink
+                  link="https://portal.thirdweb.com/typescript/v5/supported-wallets"
+                  label="TypeScript"
+                  icon={TypeScriptIcon}
+                />
+                <DocLink
+                  link="https://portal.thirdweb.com/typescript/v5/supported-wallets"
+                  label="React"
+                  icon={ReactIcon}
+                />
+                <DocLink
+                  link="https://portal.thirdweb.com/typescript/v5/supported-wallets"
+                  label="React Native"
+                  icon={ReactIcon}
+                />
+              </div>
+            </div>
+          </EmptyChartState>
         ) : (
           <BarChart
             accessibilityLayer
@@ -184,7 +218,26 @@ export function WalletConnectorsChartCard(props: {
               axisLine={false}
             />
 
-            <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
+            <YAxis
+              dataKey={(data) =>
+                Object.entries(data)
+                  .filter(([key]) => key !== "time")
+                  .map(([, value]) => value)
+                  .reduce((acc, current) => Number(acc) + Number(current), 0)
+              }
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(value) => formatTickerNumber(value)}
+            />
+
+            <ChartTooltip
+              cursor={true}
+              content={
+                <ChartTooltipContent
+                  valueFormatter={(value) => formatTickerNumber(Number(value))}
+                />
+              }
+            />
             <ChartLegend content={<ChartLegendContent />} />
             {uniqueWalletTypes.map((walletType) => {
               return (

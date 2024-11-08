@@ -84,7 +84,10 @@ export async function estimateUserOpGas(args: {
   // add gas buffer for managed account factory delegate calls
   return {
     preVerificationGas: hexToBigInt(res.preVerificationGas),
-    verificationGas: hexToBigInt(res.verificationGas),
+    verificationGas:
+      res.verificationGas !== undefined
+        ? hexToBigInt(res.verificationGas)
+        : undefined,
     verificationGasLimit: hexToBigInt(res.verificationGasLimit),
     callGasLimit: hexToBigInt(res.callGasLimit) + MANAGED_ACCOUNT_GAS_BUFFER,
     paymasterVerificationGasLimit:
@@ -287,7 +290,7 @@ async function sendBundlerRequest(args: {
   if (!response.ok || res.error) {
     let error = res.error || response.statusText;
     if (typeof error === "object") {
-      error = JSON.stringify(error);
+      error = stringify(error);
     }
     const code = res.code || "UNKNOWN";
 

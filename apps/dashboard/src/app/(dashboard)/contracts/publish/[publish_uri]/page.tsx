@@ -3,20 +3,21 @@ import { getActiveAccountCookie, getJWTCookie } from "@/constants/cookie";
 import { getThirdwebClient } from "@/constants/thirdweb.server";
 import { ContractPublishForm } from "components/contract-components/contract-publish-form";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { fetchDeployMetadata } from "thirdweb/contract";
 import { getPublishedContractsWithPublisherMapping } from "../../../published-contract/[publisher]/[contract_id]/utils/getPublishedContractsWithPublisherMapping";
 
 type DirectDeployPageProps = {
-  params: {
+  params: Promise<{
     publish_uri: string;
-  };
+  }>;
 };
 
 export default async function PublishContractPage(
   props: DirectDeployPageProps,
 ) {
-  const decodedPublishUri = decodeURIComponent(props.params.publish_uri);
+  const params = await props.params;
+  const decodedPublishUri = decodeURIComponent(params.publish_uri);
   const publishUri = decodedPublishUri.startsWith("ipfs://")
     ? decodedPublishUri
     : `ipfs://${decodedPublishUri}`;
@@ -28,9 +29,9 @@ export default async function PublishContractPage(
 
   let publishMetadata = publishMetadataFromUri;
 
-  const pathname = `/contracts/publish/${props.params.publish_uri}`;
+  const pathname = `/contracts/publish/${params.publish_uri}`;
 
-  const address = getActiveAccountCookie();
+  const address = await getActiveAccountCookie();
   if (!address) {
     redirect(`/login?next=${encodeURIComponent(pathname)}`);
   }
@@ -47,6 +48,10 @@ export default async function PublishContractPage(
         contract_id: publishMetadataFromUri.name,
       });
 
+    if (!publishedContractVersions) {
+      notFound();
+    }
+
     const publishedContract = publishedContractVersions[0];
 
     if (publishedContract) {
@@ -58,7 +63,7 @@ export default async function PublishContractPage(
     }
   }
 
-  const token = getJWTCookie(address);
+  const token = await getJWTCookie(address);
   if (!token) {
     redirect(`/login?next=${encodeURIComponent(pathname)}`);
   }

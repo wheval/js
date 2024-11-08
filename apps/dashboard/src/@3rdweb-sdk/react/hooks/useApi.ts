@@ -5,27 +5,31 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { THIRDWEB_ANALYTICS_API_HOST, THIRDWEB_API_HOST } from "constants/urls";
+import { useAllChainsData } from "hooks/chains/allChains";
 import invariant from "tiny-invariant";
 import { accountKeys, apiKeys, authorizedWallets } from "../cache-keys";
 import { useLoggedInUser } from "./useLoggedInUser";
 
 // FIXME: We keep repeating types, API server should provide them
 
-export enum AccountStatus {
-  NoCustomer = "noCustomer",
-  NoPayment = "noPayment",
-  PaymentVerification = "paymentVerification",
-  ValidPayment = "validPayment",
-  InvalidPayment = "invalidPayment",
-  InvalidPaymentMethod = "invalidPaymentMethod",
-}
+export const accountStatus = {
+  noCustomer: "noCustomer",
+  noPayment: "noPayment",
+  paymentVerification: "paymentVerification",
+  validPayment: "validPayment",
+  invalidPayment: "invalidPayment",
+  invalidPaymentMethod: "invalidPaymentMethod",
+} as const;
 
-export enum AccountPlan {
-  Free = "free",
-  Growth = "growth",
-  Pro = "pro",
-  Enterprise = "enterprise",
-}
+export const accountPlan = {
+  free: "free",
+  growth: "growth",
+  pro: "pro",
+  enterprise: "enterprise",
+} as const;
+
+export type AccountStatus = (typeof accountStatus)[keyof typeof accountStatus];
+export type AccountPlan = (typeof accountPlan)[keyof typeof accountPlan];
 
 export type AuthorizedWallet = {
   id: string;
@@ -234,11 +238,34 @@ export interface WalletStats {
   walletType: string;
 }
 
+export interface WalletUserStats {
+  date: string;
+  newUsers: number;
+  returningUsers: number;
+  totalUsers: number;
+}
+
+export interface InAppWalletStats {
+  date: string;
+  authenticationMethod: string;
+  uniqueWalletsConnected: number;
+}
+
+export interface EcosystemWalletStats extends InAppWalletStats {}
+
 export interface UserOpStats {
   date: string;
   successful: number;
   failed: number;
   sponsoredUsd: number;
+}
+
+export interface UserOpStatsByChain {
+  date: string;
+  successful: number;
+  failed: number;
+  sponsoredUsd: number;
+  chainId?: string;
 }
 
 interface BillingProduct {
@@ -353,43 +380,6 @@ export function useAccountCredits() {
   });
 }
 
-async function getWalletUsage(args: {
-  clientId: string;
-  from?: Date;
-  to?: Date;
-  period?: "day" | "week" | "month" | "year" | "all";
-}) {
-  const { clientId, from, to, period } = args;
-
-  const searchParams = new URLSearchParams();
-  searchParams.append("clientId", clientId);
-  if (from) {
-    searchParams.append("from", from.toISOString());
-  }
-  if (to) {
-    searchParams.append("to", to.toISOString());
-  }
-  if (period) {
-    searchParams.append("period", period);
-  }
-  const res = await fetch(
-    `${THIRDWEB_ANALYTICS_API_HOST}/v1/wallets?${searchParams.toString()}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    },
-  );
-  const json = await res.json();
-
-  if (res.status !== 200) {
-    throw new Error(json.message);
-  }
-
-  return json.data;
-}
-
 async function getUserOpUsage(args: {
   clientId: string;
   from?: Date;
@@ -434,8 +424,9 @@ export function useUserOpUsageAggregate(args: {
 }) {
   const { clientId, from, to } = args;
   const { user, isLoggedIn } = useLoggedInUser();
+  const chainStore = useAllChainsData();
 
-  return useQuery({
+  return useQuery<UserOpStats>({
     queryKey: accountKeys.userOpStats(
       user?.address as string,
       clientId as string,
@@ -444,12 +435,37 @@ export function useUserOpUsageAggregate(args: {
       "all",
     ),
     queryFn: async () => {
-      return getUserOpUsage({
-        clientId,
-        from,
-        to,
-        period: "all",
-      });
+      const userOpStats: (UserOpStats & { chainId?: string })[] =
+        await getUserOpUsage({
+          clientId,
+          from,
+          to,
+          period: "all",
+        });
+
+      // Aggregate stats across wallet types
+      return userOpStats.reduce(
+        (acc, curr) => {
+          // Skip testnets from the aggregated stats
+          if (curr.chainId) {
+            const chain = chainStore.idToChain.get(Number(curr.chainId));
+            if (chain?.testnet) {
+              return acc;
+            }
+          }
+
+          acc.successful += curr.successful;
+          acc.failed += curr.failed;
+          acc.sponsoredUsd += curr.sponsoredUsd;
+          return acc;
+        },
+        {
+          date: (from || new Date()).toISOString(),
+          successful: 0,
+          failed: 0,
+          sponsoredUsd: 0,
+        },
+      );
     },
     enabled: !!clientId && !!user?.address && isLoggedIn,
   });
@@ -474,63 +490,6 @@ export function useUserOpUsagePeriod(args: {
     ),
     queryFn: async () => {
       return getUserOpUsage({
-        clientId,
-        from,
-        to,
-        period,
-      });
-    },
-    enabled: !!clientId && !!user?.address && isLoggedIn,
-  });
-}
-
-export function useWalletUsageAggregate(args: {
-  clientId: string;
-  from?: Date;
-  to?: Date;
-}) {
-  const { clientId, from, to } = args;
-  const { user, isLoggedIn } = useLoggedInUser();
-
-  return useQuery({
-    queryKey: accountKeys.walletStats(
-      user?.address as string,
-      clientId as string,
-      from?.toISOString() || "",
-      to?.toISOString() || "",
-      "all",
-    ),
-    queryFn: async () => {
-      return getWalletUsage({
-        clientId,
-        from,
-        to,
-        period: "all",
-      });
-    },
-    enabled: !!clientId && !!user?.address && isLoggedIn,
-  });
-}
-
-export function useWalletUsagePeriod(args: {
-  clientId: string;
-  from?: Date;
-  to?: Date;
-  period: "day" | "week" | "month" | "year";
-}) {
-  const { clientId, from, to, period } = args;
-  const { user, isLoggedIn } = useLoggedInUser();
-
-  return useQuery({
-    queryKey: accountKeys.walletStats(
-      user?.address as string,
-      clientId as string,
-      from?.toISOString() || "",
-      to?.toISOString() || "",
-      period,
-    ),
-    queryFn: async () => {
-      return getWalletUsage({
         clientId,
         from,
         to,

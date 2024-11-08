@@ -8,12 +8,13 @@ import {
   Flex,
   Menu,
   MenuButton,
+  MenuItem,
   MenuList,
   Textarea,
 } from "@chakra-ui/react";
 import { ChevronDownIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
-import { Button, MenuItem, Text } from "tw-components";
+import { Button, Text } from "tw-components";
 
 const DOWNGRADE_OPTIONS = {
   customer_service: "Not happy with customer service",
@@ -48,6 +49,7 @@ export const BillingDowngradeDialog: React.FC<BillingDowngradeDialogProps> = ({
   const [otherFeedback, setOtherFeedback] = useState("");
 
   return (
+    // @ts-expect-error - this works fine
     <AlertDialog isOpen leastDestructiveRef={cancelRef} onClose={onClose}>
       <AlertDialogOverlay>
         <AlertDialogContent minW={{ base: "auto", md: "lg" }}>

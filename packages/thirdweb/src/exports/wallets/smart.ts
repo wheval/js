@@ -15,9 +15,13 @@ export {
   estimateUserOpGas,
 } from "../../wallets/smart/lib/bundler.js";
 
-export { predictAddress } from "../../wallets/smart/lib/calls.js";
+export {
+  predictAddress,
+  predictSmartAccountAddress,
+} from "../../wallets/smart/lib/calls.js";
 
 export { getPaymasterAndData } from "../../wallets/smart/lib/paymaster.js";
+export { getZkPaymasterData } from "../../wallets/smart/lib/bundler.js";
 
 export type {
   SmartWalletConnectionOptions,

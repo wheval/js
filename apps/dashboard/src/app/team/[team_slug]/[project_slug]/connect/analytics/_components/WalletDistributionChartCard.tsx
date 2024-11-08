@@ -17,9 +17,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { WalletStats } from "@3rdweb-sdk/react/hooks/useApi";
+import {
+  EmptyChartState,
+  LoadingChartState,
+} from "components/analytics/empty-chart-state";
+import { ReactIcon } from "components/icons/brand-icons/ReactIcon";
+import { TypeScriptIcon } from "components/icons/brand-icons/TypeScriptIcon";
+import { DocLink } from "components/shared/DocLink";
 import { useMemo, useState } from "react";
 import { Pie, PieChart } from "recharts";
-import { EmptyChartState, LoadingChartState } from "./EmptyChartState";
+import {
+  formatTickerNumber,
+  formatWalletType,
+} from "../../../../../../../lib/format-utils";
 
 type ChartToShow = "totalConnections" | "uniqueWalletsConnected";
 
@@ -57,7 +67,8 @@ export function WalletDistributionChartCard(props: {
       let _uniqueConnections = 0;
 
       for (const stat of walletStats) {
-        const { walletType } = stat;
+        const { walletType: rawWalletType } = stat;
+        const walletType = formatWalletType(rawWalletType);
         const chartData = _chartDataMap.get(walletType);
 
         _totalConnections += stat.totalConnections;
@@ -192,7 +203,30 @@ export function WalletDistributionChartCard(props: {
         {props.isPending ? (
           <LoadingChartState />
         ) : chartData.length === 0 ? (
-          <EmptyChartState />
+          <EmptyChartState>
+            <div className="flex flex-col items-center justify-center">
+              <span className="mb-6 text-lg">
+                Connect any wallet to your app
+              </span>
+              <div className="flex max-w-md flex-wrap items-center justify-center gap-x-6 gap-y-4">
+                <DocLink
+                  link="https://portal.thirdweb.com/typescript/v5/supported-wallets"
+                  label="TypeScript"
+                  icon={TypeScriptIcon}
+                />
+                <DocLink
+                  link="https://portal.thirdweb.com/typescript/v5/supported-wallets"
+                  label="React"
+                  icon={ReactIcon}
+                />
+                <DocLink
+                  link="https://portal.thirdweb.com/typescript/v5/supported-wallets"
+                  label="React Native"
+                  icon={ReactIcon}
+                />
+              </div>
+            </div>
+          </EmptyChartState>
         ) : (
           <PieChart>
             <ChartTooltip
@@ -206,7 +240,7 @@ export function WalletDistributionChartCard(props: {
                           ? uniqueConnections
                           : totalConnections;
                       const percentageValue = ((v / sumValue) * 100).toFixed(2);
-                      return `${percentageValue}% - ${v}`;
+                      return `${percentageValue}% - ${formatTickerNumber(v)}`;
                     }
                   }}
                 />

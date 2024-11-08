@@ -1,5 +1,4 @@
 "use client";
-
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -9,11 +8,15 @@ import {
 } from "@/constants/env";
 import { useThirdwebClient } from "@/constants/thirdweb.client";
 import { CustomConnectWallet } from "@3rdweb-sdk/react/components/connect-wallet";
+import { useAccount } from "@3rdweb-sdk/react/hooks/useApi";
+import { useLoggedInUser } from "@3rdweb-sdk/react/hooks/useLoggedInUser";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CanClaimResponseType } from "app/api/testnet-faucet/can-claim/CanClaimResponseType";
+import { Onboarding } from "components/onboarding";
 import { mapV4ChainToV5Chain } from "contexts/map-chains";
 import { useTrack } from "hooks/analytics/useTrack";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { toUnits } from "thirdweb";
@@ -47,7 +50,7 @@ export function FaucetButton({
   amount,
 }: {
   chain: ChainMetadata;
-  amount: string;
+  amount: number;
 }) {
   const client = useThirdwebClient();
   const address = useActiveAccount()?.address;
@@ -113,6 +116,10 @@ export function FaucetButton({
     },
   });
 
+  const accountQuery = useAccount();
+  const userQuery = useLoggedInUser();
+  const [showOnboarding, setShowOnBoarding] = useState(false);
+
   const canClaimFaucetQuery = useQuery({
     queryKey: ["testnet-faucet-can-claim", chainId],
     queryFn: async () => {
@@ -133,6 +140,32 @@ export function FaucetButton({
 
   const form = useForm<z.infer<typeof claimFaucetSchema>>();
 
+  // Force users to log in to claim the faucet
+  if (!address || !userQuery.user) {
+    return (
+      <CustomConnectWallet
+        loginRequired={true}
+        connectButtonClassName="!w-full !rounded !bg-primary !text-primary-foreground !px-4 !py-2 !text-sm"
+      />
+    );
+  }
+
+  if (accountQuery.isPending) {
+    return (
+      <Button variant="outline" className="w-full gap-2">
+        Loading account <Spinner className="size-3" />
+      </Button>
+    );
+  }
+
+  if (!accountQuery.data) {
+    return (
+      <Button variant="outline" className="w-full gap-2" disabled>
+        Failed to load account
+      </Button>
+    );
+  }
+
   // loading state
   if (faucetWalletBalanceQuery.isPending || canClaimFaucetQuery.isPending) {
     return (
@@ -145,7 +178,7 @@ export function FaucetButton({
   // faucet is empty
   if (isFaucetEmpty) {
     return (
-      <Button variant="outline" disabled className="!opacity-100 w-full ">
+      <Button variant="outline" disabled className="!opacity-100 w-full">
         Faucet is empty right now
       </Button>
     );
@@ -168,12 +201,20 @@ export function FaucetButton({
     );
   }
 
-  if (!address) {
+  // Email verification is required to claim from the faucet
+  if (accountQuery.data.status === "noCustomer") {
     return (
-      <CustomConnectWallet
-        loginRequired={false}
-        connectButtonClassName="!w-full !rounded !bg-primary !text-primary-foreground !px-4 !py-2 !text-sm"
-      />
+      <>
+        <Button
+          variant="outline"
+          className="!opacity-100 w-full"
+          onClick={() => setShowOnBoarding(true)}
+        >
+          Verify your Email
+        </Button>
+        {/* We will show the modal only if the user click on it, because this is a public page */}
+        {showOnboarding && <Onboarding onOpenChange={setShowOnBoarding} />}
+      </>
     );
   }
 
@@ -208,6 +249,7 @@ export function FaucetButton({
               <FormItem>
                 <FormControl>
                   <Turnstile
+                    className="mt-4"
                     siteKey={TURNSTILE_SITE_KEY}
                     onSuccess={(token) => field.onChange(token)}
                   />

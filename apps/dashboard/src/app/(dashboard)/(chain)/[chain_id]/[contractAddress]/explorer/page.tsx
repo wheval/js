@@ -1,17 +1,18 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CircleAlertIcon } from "lucide-react";
 import { notFound } from "next/navigation";
+import { localhost } from "thirdweb/chains";
 import { resolveContractAbi } from "thirdweb/contract";
 import { getContractPageParamsInfo } from "../_utils/getContractFromParams";
 import { ContractExplorerPage } from "./ContractExplorerPage";
+import { ContractExplorerPageClient } from "./ContractExplorerPage.client";
 
 export default async function Page(props: {
-  params: {
+  params: Promise<{
     contractAddress: string;
     chain_id: string;
-  };
+  }>;
 }) {
-  const info = await getContractPageParamsInfo(props.params);
+  const params = await props.params;
+  const info = await getContractPageParamsInfo(params);
 
   if (!info) {
     notFound();
@@ -19,19 +20,22 @@ export default async function Page(props: {
 
   const { contract, chainMetadata } = info;
 
-  try {
-    const abi = await resolveContractAbi(contract);
-    return <ContractExplorerPage contract={contract} abi={abi} />;
-  } catch {
+  if (contract.chain.id === localhost.id) {
     return (
-      <Alert variant="destructive">
-        <CircleAlertIcon className="size-5" />
-        <AlertTitle>Failed to resolve contract ABI</AlertTitle>
-        <AlertDescription>
-          Please verify that contract address is correct and deployed on "
-          {chainMetadata.name}" chain.
-        </AlertDescription>
-      </Alert>
+      <ContractExplorerPageClient
+        contract={contract}
+        chainMetadata={chainMetadata}
+      />
     );
   }
+
+  const abi = await resolveContractAbi(contract).catch(() => undefined);
+
+  return (
+    <ContractExplorerPage
+      contract={contract}
+      abi={abi}
+      chainMetadata={chainMetadata}
+    />
+  );
 }

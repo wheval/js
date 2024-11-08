@@ -13,34 +13,27 @@ export async function getContractPageParamsInfo(params: {
 }) {
   const contractAddress = getCheckSummedAddress(params.contractAddress);
   const chainSlugOrId = params.chain_id;
-  let chainMetadata: ChainMetadata | null = null;
-  try {
-    chainMetadata = await fetchChain(chainSlugOrId);
-  } catch {
-    // move on
-  }
+  let chainMetadata = await fetchChain(chainSlugOrId).catch(() => null);
 
-  if (!chainMetadata) {
-    const cookieStore = cookies();
-    const localChainStoreValue = cookieStore.get(TW_LOCAL_CHAIN_STORE)?.value;
+  const cookieStore = await cookies();
+  const localChainStoreValue = cookieStore.get(TW_LOCAL_CHAIN_STORE)?.value;
 
-    if (localChainStoreValue) {
-      try {
-        const chains = JSON.parse(decodeURIComponent(localChainStoreValue));
-        if (typeof chains === "object" && Array.isArray(chains)) {
-          const chainOverrides = chains as ChainMetadata[];
-          const chain = chainOverrides.find(
-            (c) =>
-              c.slug === chainSlugOrId ||
-              c.chainId === Number.parseInt(chainSlugOrId),
-          );
-          if (chain) {
-            chainMetadata = chain;
-          }
+  if (localChainStoreValue) {
+    try {
+      const chains = JSON.parse(decodeURIComponent(localChainStoreValue));
+      if (typeof chains === "object" && Array.isArray(chains)) {
+        const chainOverrides = chains as ChainMetadata[];
+        const chain = chainOverrides.find(
+          (c) =>
+            c.slug === chainSlugOrId ||
+            c.chainId === Number.parseInt(chainSlugOrId),
+        );
+        if (chain) {
+          chainMetadata = chain;
         }
-      } catch {
-        // noop
       }
+    } catch {
+      // noop
     }
   }
 
@@ -49,7 +42,7 @@ export async function getContractPageParamsInfo(params: {
   }
 
   // attempt to get the auth token
-  const token = getAuthToken();
+  const token = await getAuthToken();
 
   const contract = getContract({
     address: contractAddress,

@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "sonner";
-import { CreateAPIKeyDialogUI } from ".";
+import { CreateAPIKeyDialogUI, type CreateAPIKeyPrefillOptions } from ".";
 import { createApiKeyStub } from "../../../../stories/stubs";
 import { mobileViewport } from "../../../../stories/utils";
 
@@ -21,38 +21,19 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const DesktopProjectWording: Story = {
-  args: {
-    wording: "project",
-  },
+export const Desktop: Story = {
+  args: {},
 };
 
-export const MobileProjectWording: Story = {
-  args: {
-    wording: "project",
-  },
-  parameters: {
-    viewport: mobileViewport("iphone14"),
-  },
-};
-
-export const DesktopAPIKeyWording: Story = {
-  args: {
-    wording: "api-key",
-  },
-};
-
-export const MobileAPIKeyWording: Story = {
-  args: {
-    wording: "api-key",
-  },
+export const Mobile: Story = {
+  args: {},
   parameters: {
     viewport: mobileViewport("iphone14"),
   },
 };
 
 function Story(props: {
-  wording: "project" | "api-key";
+  prefill?: CreateAPIKeyPrefillOptions;
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const mutation = useMutation({
@@ -68,10 +49,10 @@ function Story(props: {
   return (
     <div className="flex grow items-center justify-center p-6">
       <CreateAPIKeyDialogUI
-        wording={props.wording}
         open={isOpen}
         onOpenChange={setIsOpen}
         createKeyMutation={mutation}
+        prefill={props.prefill}
       />
 
       <Button

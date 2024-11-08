@@ -9,7 +9,6 @@ import { HomepageTopNav } from "components/product-pages/common/Topnav";
 import { HomepageSection } from "components/product-pages/homepage/HomepageSection";
 import { getAbsoluteUrl } from "lib/vercel-utils";
 import { NextSeo } from "next-seo";
-import Head from "next/head";
 import { PageId } from "page-id";
 import { useRef } from "react";
 import {
@@ -93,7 +92,6 @@ const superchains = [
     name: "Soneium",
     link: "/soneium-minato?switch",
     src: require("../../../public/assets/grant/superchain/soneium-icon.png"),
-    isComingSoon: true,
   },
   {
     id: "campNetworkv2",
@@ -144,20 +142,6 @@ const GrantSuperChain = () => {
           ],
         }}
       />
-
-      {/* Farcaster frames headers */}
-      <Head>
-        <meta property="fc:frame" content="vNext" />
-        <meta
-          property="fc:frame:image"
-          content={`${getAbsoluteUrl()}/assets/superchain/frame-1.png`}
-        />
-        <meta property="fc:frame:button:1" content="Apply" />
-        <meta
-          property="fc:frame:post_url"
-          content={`${getAbsoluteUrl()}/api/superchain/frame?type=apply`}
-        />
-      </Head>
 
       <Flex
         justify="center"

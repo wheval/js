@@ -1,25 +1,32 @@
 import { notFound, redirect } from "next/navigation";
+import { localhost } from "thirdweb/chains";
 import { getContractPageParamsInfo } from "../_utils/getContractFromParams";
 import { getContractPageMetadata } from "../_utils/getContractPageMetadata";
 import { ContractSplitPage } from "./ContractSplitPage";
+import { ContractSplitPageClient } from "./ContractSplitPage.client";
 
 export default async function Page(props: {
-  params: {
+  params: Promise<{
     contractAddress: string;
     chain_id: string;
-  };
+  }>;
 }) {
-  const info = await getContractPageParamsInfo(props.params);
+  const params = await props.params;
+  const info = await getContractPageParamsInfo(params);
 
   if (!info) {
     notFound();
   }
-
-  const { isSplitSupported } = await getContractPageMetadata(info.contract);
-
-  if (!isSplitSupported) {
-    redirect(`/${props.params.chain_id}/${props.params.contractAddress}`);
+  const { contract } = info;
+  if (contract.chain.id === localhost.id) {
+    return <ContractSplitPageClient contract={contract} />;
   }
 
-  return <ContractSplitPage contract={info.contract} />;
+  const { isSplitSupported } = await getContractPageMetadata(contract);
+
+  if (!isSplitSupported) {
+    redirect(`/${params.chain_id}/${params.contractAddress}`);
+  }
+
+  return <ContractSplitPage contract={contract} />;
 }

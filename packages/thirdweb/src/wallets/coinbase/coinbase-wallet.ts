@@ -3,7 +3,7 @@
  */
 
 import type { ProviderInterface } from "@coinbase/wallet-sdk";
-import { trackConnect } from "../../analytics/track.js";
+import { trackConnect } from "../../analytics/track/connect.js";
 import type { Chain } from "../../chains/types.js";
 import { getCachedChainIfExists } from "../../chains/utils.js";
 import { COINBASE } from "../constants.js";
@@ -81,6 +81,7 @@ export function coinbaseWalletSDK(args: {
         client: options.client,
         walletType: COINBASE,
         walletAddress: account.address,
+        chainId: chain.id,
       });
       // return account
       return account;
@@ -100,6 +101,7 @@ export function coinbaseWalletSDK(args: {
         client: options.client,
         walletType: COINBASE,
         walletAddress: account.address,
+        chainId: chain.id,
       });
       // return account
       return account;

@@ -1,4 +1,4 @@
-import { AccountPlan } from "@3rdweb-sdk/react/hooks/useApi";
+import { type AccountPlan, accountPlan } from "@3rdweb-sdk/react/hooks/useApi";
 import { Link, Text } from "tw-components";
 
 export const CONTACT_US_URL =
@@ -14,7 +14,7 @@ export const PLANS: {
     features: Array<string | string[]>;
   };
 } = {
-  [AccountPlan.Free]: {
+  [accountPlan.free]: {
     title: "Starter",
     price: 0,
     subTitle: null,
@@ -29,7 +29,7 @@ export const PLANS: {
       "Blockchain infra (RPC, IPFS)",
     ],
   },
-  [AccountPlan.Growth]: {
+  [accountPlan.growth]: {
     price: 99,
     title: "Growth",
     subTitle: "Everything in Starter, plus:",
@@ -45,7 +45,7 @@ export const PLANS: {
       "Advanced paymaster rules",
     ],
   },
-  [AccountPlan.Pro]: {
+  [accountPlan.pro]: {
     price: "Custom",
     title: "Pro",
     subTitle: "Everything in Growth, plus:",
@@ -60,7 +60,7 @@ export const PLANS: {
       "Enterprise grade SLAs",
     ],
   },
-  [AccountPlan.Enterprise]: {
+  [accountPlan.enterprise]: {
     price: "$$$",
     title: "Enterprise",
     subTitle: "Everything in Pro, plus:",
@@ -199,7 +199,7 @@ export const FAQ_GENERAL = [
       <Text>
         Nope! You can self serve and upgrade to the Growth plan in the Dashboard
         under{" "}
-        <Link href="/dashboard/settings/billing" color="blue.500">
+        <Link href="/team/~/~/settings/billing" color="blue.500">
           Billing
         </Link>{" "}
         whenever you are ready!
@@ -212,7 +212,7 @@ export const FAQ_GENERAL = [
       <Text>
         You can review your usage history at any time on the Dashboard by
         visiting the{" "}
-        <Link href="/dashboard/settings/usage" color="blue.500">
+        <Link href="/team/~/~/usage" color="blue.500">
           Usage
         </Link>{" "}
         tab under Settings.

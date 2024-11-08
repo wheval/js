@@ -1,6 +1,6 @@
 import { CrossCircledIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
-import { trackPayEvent } from "../../../../../../../analytics/track.js";
+import { trackPayEvent } from "../../../../../../../analytics/track/pay.js";
 import type { Chain } from "../../../../../../../chains/types.js";
 import type { ThirdwebClient } from "../../../../../../../client/client.js";
 import type { BuyWithCryptoQuote } from "../../../../../../../pay/buyWithCrypto/getQuote.js";
@@ -279,7 +279,7 @@ export function SwapConfirmationScreen(props: {
                   fromAmount: props.quote.swapDetails.fromAmountWei,
                   toToken: props.quote.swapDetails.toToken.tokenAddress,
                   toAmount: props.quote.swapDetails.toAmountWei,
-                  chainId: props.quote.swapDetails.toToken.chainId,
+                  chainId: props.quote.swapDetails.fromToken.chainId,
                   dstChainId: props.quote.swapDetails.toToken.chainId,
                 });
 

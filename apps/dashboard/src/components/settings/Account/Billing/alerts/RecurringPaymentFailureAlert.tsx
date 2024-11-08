@@ -1,12 +1,11 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { TrackedLinkTW } from "@/components/ui/tracked-link";
-import { type Account, AccountStatus } from "@3rdweb-sdk/react/hooks/useApi";
+import { type Account, accountStatus } from "@3rdweb-sdk/react/hooks/useApi";
 import { OnboardingModal } from "components/onboarding/Modal";
 import { getRecurringPaymentFailureResponse } from "lib/billing";
 import { ExternalLinkIcon, XIcon } from "lucide-react";
 import { useState } from "react";
-import { Text } from "tw-components";
 import { LazyOnboardingBilling } from "../../../../onboarding/LazyOnboardingBilling";
 import { ManageBillingButton } from "../ManageButton";
 
@@ -70,23 +69,21 @@ export const RecurringPaymentFailureAlert: React.FC<
             <ul className="list-disc pl-3.5">
               {affectedServices.map((service) => (
                 <li key={service}>
-                  <Text>{service}</Text>
+                  <span>{service}</span>
                 </li>
               ))}
             </ul>
           </div>
         )}
 
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-3 md:flex-row">
           <ManageBillingButton
             account={dashboardAccount}
             loading={paymentMethodSaving}
             loadingText="Verifying payment method"
             onClick={
-              [
-                AccountStatus.ValidPayment,
-                AccountStatus.InvalidPayment,
-              ].includes(dashboardAccount.status)
+              dashboardAccount.status === accountStatus.validPayment ||
+              dashboardAccount.status === accountStatus.invalidPayment
                 ? undefined
                 : () => setIsPaymentMethodOpen(true)
             }

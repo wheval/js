@@ -1,34 +1,35 @@
 import { notFound, redirect } from "next/navigation";
+import { localhost } from "thirdweb/chains";
 import { getContractPageParamsInfo } from "../_utils/getContractFromParams";
 import { getContractPageMetadata } from "../_utils/getContractPageMetadata";
+import { AccountSignersClient } from "./AccountSigners.client";
 import { AccountSigners } from "./components/account-signers";
 
 export default async function Page(props: {
-  params: {
+  params: Promise<{
     contractAddress: string;
     chain_id: string;
-  };
+  }>;
 }) {
-  const info = await getContractPageParamsInfo(props.params);
+  const params = await props.params;
+  const info = await getContractPageParamsInfo(params);
 
   if (!info) {
     notFound();
   }
 
-  const { contract } = info;
+  const { contract, chainMetadata } = info;
+
+  if (chainMetadata.chainId === localhost.id) {
+    return <AccountSignersClient contract={contract} />;
+  }
+
   const { isAccountPermissionsSupported } =
     await getContractPageMetadata(contract);
 
   if (!isAccountPermissionsSupported) {
-    redirect(`/${props.params.chain_id}/${props.params.contractAddress}`);
+    redirect(`/${params.chain_id}/${params.contractAddress}`);
   }
 
-  return (
-    <div>
-      <h1 className="mb-4 font-semibold text-2xl tracking-tight">
-        Account Signers
-      </h1>
-      <AccountSigners contract={contract} />
-    </div>
-  );
+  return <AccountSigners contract={contract} />;
 }

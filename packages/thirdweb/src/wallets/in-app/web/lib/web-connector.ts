@@ -4,8 +4,10 @@ import { webLocalStorage } from "../../../../utils/storage/webStorage.js";
 import type { SocialAuthOption } from "../../../../wallets/types.js";
 import type { Account } from "../../../interfaces/wallet.js";
 import { getUserStatus } from "../../core/actions/get-enclave-user-status.js";
+import { authEndpoint } from "../../core/authentication/authEndpoint.js";
 import { ClientScopedStorage } from "../../core/authentication/client-scoped-storage.js";
 import { guestAuthenticate } from "../../core/authentication/guest.js";
+import { customJwt } from "../../core/authentication/jwt.js";
 import {
   getLinkedProfilesInternal,
   linkAccount,
@@ -99,10 +101,7 @@ export class InAppWebConnector implements InAppConnector {
       onAuthSuccess: async (authResult) => {
         onAuthSuccess?.(authResult);
 
-        if (
-          this.ecosystem &&
-          authResult.storedToken.authDetails.walletType === "sharded"
-        ) {
+        if (authResult.storedToken.authDetails.walletType === "sharded") {
           // If this is an existing sharded ecosystem wallet, we'll need to migrate
           const result = await this.querier.call<boolean>({
             procedureName: "migrateFromShardToEnclave",
@@ -111,11 +110,15 @@ export class InAppWebConnector implements InAppConnector {
             },
           });
           if (!result) {
-            throw new Error("Failed to migrate from sharded to enclave wallet");
+            console.warn(
+              "Failed to migrate from sharded to enclave wallet, continuing with sharded wallet",
+            );
           }
         }
 
-        await this.initializeWallet(authResult.storedToken.cookieString);
+        this.wallet = await this.initializeWallet(
+          authResult.storedToken.cookieString,
+        );
 
         if (!this.wallet) {
           throw new Error("Failed to initialize wallet");
@@ -131,7 +134,7 @@ export class InAppWebConnector implements InAppConnector {
           deviceShareStored,
         });
 
-        if (authResult.storedToken.authDetails.walletType !== "enclave") {
+        if (this.wallet instanceof IFrameWallet) {
           await this.querier.call({
             procedureName: "initIframe",
             params: {
@@ -161,7 +164,7 @@ export class InAppWebConnector implements InAppConnector {
     });
   }
 
-  async initializeWallet(authToken?: string) {
+  async initializeWallet(authToken?: string): Promise<IWebWallet> {
     const storedAuthToken = await this.storage.getAuthCookie();
     if (!authToken && storedAuthToken === null) {
       throw new Error(
@@ -174,6 +177,7 @@ export class InAppWebConnector implements InAppConnector {
       client: this.client,
       ecosystem: this.ecosystem,
     });
+
     if (!user) {
       throw new Error("Cannot initialize wallet, no user logged in");
     }
@@ -184,16 +188,15 @@ export class InAppWebConnector implements InAppConnector {
     }
 
     if (user.wallets[0]?.type === "enclave") {
-      this.wallet = new EnclaveWallet({
+      return new EnclaveWallet({
         client: this.client,
         ecosystem: this.ecosystem,
         address: user.wallets[0].address,
         storage: this.storage,
       });
-      return;
     }
 
-    this.wallet = new IFrameWallet({
+    return new IFrameWallet({
       client: this.client,
       ecosystem: this.ecosystem,
       querier: this.querier,
@@ -231,7 +234,7 @@ export class InAppWebConnector implements InAppConnector {
       if (!localAuthToken) {
         return { status: "Logged Out" };
       }
-      await this.initializeWallet(localAuthToken);
+      this.wallet = await this.initializeWallet(localAuthToken);
     }
     if (!this.wallet) {
       throw new Error("Wallet not initialized");
@@ -268,8 +271,11 @@ export class InAppWebConnector implements InAppConnector {
     });
   }
 
-  async loginWithAuthToken(authResult: AuthStoredTokenWithCookieReturnType) {
-    return this.auth.loginWithAuthToken(authResult);
+  async loginWithAuthToken(
+    authResult: AuthStoredTokenWithCookieReturnType,
+    recoveryCode?: string,
+  ) {
+    return this.auth.loginWithAuthToken(authResult, recoveryCode);
   }
 
   /**
@@ -292,19 +298,21 @@ export class InAppWebConnector implements InAppConnector {
           client: this.client,
           ecosystem: this.ecosystem,
         });
+      case "auth_endpoint": {
+        return authEndpoint({
+          payload: args.payload,
+          client: this.client,
+          ecosystem: this.ecosystem,
+        });
+      }
       case "jwt":
-        return this.auth.authenticateWithCustomJwt({
+        return customJwt({
           jwt: args.jwt,
-          encryptionKey: args.encryptionKey,
+          client: this.client,
+          ecosystem: this.ecosystem,
         });
       case "passkey": {
         return this.passkeyAuth(args);
-      }
-      case "auth_endpoint": {
-        return this.auth.authenticateWithCustomAuthEndpoint({
-          payload: args.payload,
-          encryptionKey: args.encryptionKey,
-        });
       }
       case "iframe_email_verification": {
         return this.auth.authenticateWithIframe({
@@ -318,6 +326,7 @@ export class InAppWebConnector implements InAppConnector {
       case "facebook":
       case "google":
       case "telegram":
+      case "github":
       case "twitch":
       case "farcaster":
       case "line":
@@ -358,17 +367,10 @@ export class InAppWebConnector implements InAppConnector {
   ): Promise<AuthLoginReturnType> {
     const strategy = args.strategy;
     switch (strategy) {
+      case "auth_endpoint":
       case "jwt": {
-        return this.auth.loginWithCustomJwt({
-          jwt: args.jwt,
-          encryptionKey: args.encryptionKey,
-        });
-      }
-      case "auth_endpoint": {
-        return this.auth.loginWithCustomAuthEndpoint({
-          payload: args.payload,
-          encryptionKey: args.encryptionKey,
-        });
+        const authToken = await this.authenticate(args);
+        return await this.loginWithAuthToken(authToken, args.encryptionKey);
       }
       case "iframe_email_verification": {
         return this.auth.loginWithIframe({
@@ -390,6 +392,7 @@ export class InAppWebConnector implements InAppConnector {
       case "google":
       case "farcaster":
       case "telegram":
+      case "github":
       case "line":
       case "x":
       case "guest":

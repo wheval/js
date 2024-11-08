@@ -1,7 +1,9 @@
-import { trackConnect } from "../../../../analytics/track.js";
+import { trackConnect } from "../../../../analytics/track/connect.js";
 import type { Chain } from "../../../../chains/types.js";
 import { getCachedChainIfExists } from "../../../../chains/utils.js";
 import type { ThirdwebClient } from "../../../../client/client.js";
+import { stringify } from "../../../../utils/json.js";
+import { getEcosystemInfo } from "../../../ecosystem/get-ecosystem-wallet-auth-options.js";
 import type { Account, Wallet } from "../../../interfaces/wallet.js";
 import { createWalletEmitter } from "../../../wallet-emitter.js";
 import type {
@@ -21,7 +23,7 @@ export async function getOrCreateInAppWalletConnector(
   connectorFactory: (client: ThirdwebClient) => Promise<InAppConnector>,
   ecosystem?: Ecosystem,
 ) {
-  const key = JSON.stringify({ clientId: client.clientId, ecosystem });
+  const key = stringify({ clientId: client.clientId, ecosystem });
   if (connectorCache.has(key)) {
     return connectorCache.get(key) as InAppConnector;
   }
@@ -38,9 +40,10 @@ export function createInAppWallet(args: {
   connectorFactory: (client: ThirdwebClient) => Promise<InAppConnector>;
   ecosystem?: Ecosystem;
 }): Wallet<"inApp" | EcosystemWalletId> {
-  const { createOptions, connectorFactory, ecosystem } = args;
+  const { createOptions: _createOptions, connectorFactory, ecosystem } = args;
   const walletId = ecosystem ? ecosystem.id : "inApp";
   const emitter = createWalletEmitter<"inApp">();
+  let createOptions = _createOptions;
   let account: Account | undefined = undefined;
   let chain: Chain | undefined = undefined;
   let client: ThirdwebClient | undefined;
@@ -66,6 +69,28 @@ export function createInAppWallet(args: {
         connectorFactory,
         ecosystem,
       );
+
+      if (ecosystem) {
+        const ecosystemOptions = await getEcosystemInfo(ecosystem.id);
+        const smartAccountOptions = ecosystemOptions?.smartAccountOptions;
+        if (smartAccountOptions) {
+          const preferredChain = options.chain;
+          if (!preferredChain) {
+            throw new Error(
+              "Chain is required for ecosystem smart accounts, pass it via connect() or via UI components",
+            );
+          }
+          createOptions = {
+            ...createOptions,
+            smartAccount: {
+              chain: preferredChain,
+              sponsorGas: smartAccountOptions.sponsorGas,
+              factoryAddress: smartAccountOptions.accountFactoryAddress,
+            },
+          };
+        }
+      }
+
       const [connectedAccount, connectedChain] = await autoConnectInAppWallet(
         options,
         createOptions,
@@ -78,8 +103,10 @@ export function createInAppWallet(args: {
       chain = connectedChain;
       trackConnect({
         client: options.client,
+        ecosystem,
         walletType: walletId,
         walletAddress: account.address,
+        chainId: chain.id,
       });
       // return only the account
       return account;
@@ -92,6 +119,27 @@ export function createInAppWallet(args: {
         ecosystem,
       );
 
+      if (ecosystem) {
+        const ecosystemOptions = await getEcosystemInfo(ecosystem.id);
+        const smartAccountOptions = ecosystemOptions?.smartAccountOptions;
+        if (smartAccountOptions) {
+          const preferredChain = options.chain;
+          if (!preferredChain) {
+            throw new Error(
+              "Chain is required for ecosystem smart accounts, pass it via connect() or via UI components",
+            );
+          }
+          createOptions = {
+            ...createOptions,
+            smartAccount: {
+              chain: preferredChain,
+              sponsorGas: smartAccountOptions.sponsorGas,
+              factoryAddress: smartAccountOptions.accountFactoryAddress,
+            },
+          };
+        }
+      }
+
       const [connectedAccount, connectedChain] = await connectInAppWallet(
         options,
         createOptions,
@@ -103,8 +151,10 @@ export function createInAppWallet(args: {
       chain = connectedChain;
       trackConnect({
         client: options.client,
+        ecosystem,
         walletType: walletId,
         walletAddress: account.address,
+        chainId: chain.id,
       });
       // return only the account
       return account;
@@ -135,6 +185,22 @@ export function createInAppWallet(args: {
           connectorFactory,
           ecosystem,
         );
+
+        if (ecosystem) {
+          const ecosystemOptions = await getEcosystemInfo(ecosystem.id);
+          const smartAccountOptions = ecosystemOptions?.smartAccountOptions;
+          if (smartAccountOptions) {
+            createOptions = {
+              ...createOptions,
+              smartAccount: {
+                chain: newChain,
+                sponsorGas: smartAccountOptions.sponsorGas,
+                factoryAddress: smartAccountOptions.accountFactoryAddress,
+              },
+            };
+          }
+        }
+
         const [connectedAccount, connectedChain] = await autoConnectInAppWallet(
           {
             chain: newChain,
