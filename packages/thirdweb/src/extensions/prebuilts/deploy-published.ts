@@ -105,8 +105,8 @@ export async function deployPublishedContract(
     chain,
     deployMetadata,
     client,
-    initializeParams: contractParams,
-    implementationConstructorParams,
+    initializeParams: contractParams || deployMetadata.constructorParams,
+    implementationConstructorParams: implementationConstructorParams || deployMetadata.implConstructorParams,
     salt,
   });
 }
@@ -128,6 +128,48 @@ export type DeployContractfromDeployMetadataOptions = {
   salt?: string;
 };
 
+interface RefType {
+  publisher: string;
+  version: string;
+  contractId: string;
+}
+
+interface ImplementationConstructorParam {
+  defaultValue?: string;
+  ref?: RefType;
+}
+
+type ProcessRefDeploymentsOptions = {
+  client: ThirdwebClient;
+  chain: Chain;
+  account: Account;
+  params: Record<string, ImplementationConstructorParam>;
+};
+
+async function processRefDeployments(options: ProcessRefDeploymentsOptions) {
+  const {
+    client,
+    account,
+    chain,
+    params
+  } = options;
+
+  for (const [key, param] of Object.entries(params)) {
+    const ref = param.ref;
+    if (ref && ref.publisher && ref.version && ref.contractId) {
+      // Call the fetchAndDeployContract function with the ref data
+      await deployPublishedContract({
+        client,
+        chain,
+        account,
+        contractId: ref.contractId,
+        publisher: ref.publisher,
+        version: ref.version,
+      });
+    }
+  }
+}
+
 /**
  * @internal
  */
@@ -144,6 +186,23 @@ export async function deployContractfromDeployMetadata(
     modules,
     salt,
   } = options;
+
+  await processRefDeployments({
+    client,
+    account,
+    chain,
+    params:
+      implementationConstructorParams as Record<string, ImplementationConstructorParam> || {}
+  });
+
+  await processRefDeployments({
+    client,
+    account,
+    chain,
+    params:
+      initializeParams as Record<string, ImplementationConstructorParam> || {}
+  });
+
   switch (deployMetadata?.deployType) {
     case "standard": {
       return directDeploy({

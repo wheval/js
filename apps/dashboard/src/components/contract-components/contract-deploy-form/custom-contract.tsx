@@ -161,6 +161,8 @@ export const CustomContractForm: React.FC<CustomContractFormProps> = ({
           "initialize",
   );
 
+  const implementationConstructorParams = metadata?.implConstructorParams;
+
   const isFactoryDeployment =
     metadata?.isDeployableViaFactory ||
     metadata?.isDeployableViaProxy ||
@@ -444,6 +446,7 @@ export const CustomContractForm: React.FC<CustomContractFormProps> = ({
         client: thirdwebClient,
         deployMetadata: metadata,
         initializeParams,
+        implementationConstructorParams,
         salt,
         modules: modules?.map((m) => ({
           deployMetadata: m,
