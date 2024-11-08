@@ -1,5 +1,15 @@
 # thirdweb
 
+## 5.67.1
+
+### Patch Changes
+
+- [#5335](https://github.com/thirdweb-dev/js/pull/5335) [`1e7e32f`](https://github.com/thirdweb-dev/js/commit/1e7e32f2cbb23dad48eda6e1224c09df89fc249d) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Added global transaction decorator, better eip712 transaction support
+
+- [#5349](https://github.com/thirdweb-dev/js/pull/5349) [`46d0b4b`](https://github.com/thirdweb-dev/js/commit/46d0b4bdc050b92886cfea5623a08aa8f7272006) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Use maxFeePerGas for Pay gas cost estimations in transaction flow
+
+- [#5343](https://github.com/thirdweb-dev/js/pull/5343) [`5de5418`](https://github.com/thirdweb-dev/js/commit/5de541878cfd4102baa049a0d84ce9911746ac6c) Thanks [@gregfromstl](https://github.com/gregfromstl)! - Adds chain ID to tracked analytics
+
 ## 5.67.0
 
 ### Minor Changes
