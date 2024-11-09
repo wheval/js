@@ -51,7 +51,7 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
     // Clear values accordingly when toggling between input types
     if (isCustomInputEnabled[index]) {
       form.setValue(
-        `implConstructorParams.${deployParams[index]?.name || "*"}.defaultValue`,
+        `constructorParams.${deployParams[index]?.name || "*"}.defaultValue`,
         "",
         {
           shouldDirty: true,
@@ -59,7 +59,7 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
       );
     } else {
       form.setValue(
-        `implConstructorParams.${deployParams[index]?.name || "*"}.ref`,
+        `constructorParams.${deployParams[index]?.name || "*"}.ref`,
         "",
         {
           shouldDirty: true,
