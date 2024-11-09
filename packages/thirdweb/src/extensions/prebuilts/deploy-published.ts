@@ -152,7 +152,7 @@ async function processRefDeployments(options: ProcessRefDeploymentsOptions) {
 
   for (const param of Object.values(params)) {
     const ref = param.ref;
-    if (ref && ref.publisher && ref.version && ref.contractId) {
+    if (ref?.publisher && ref.version && ref.contractId) {
       // Call the fetchAndDeployContract function with the ref data
       await deployPublishedContract({
         client,
