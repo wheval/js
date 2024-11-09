@@ -5,19 +5,19 @@ import type { SideBar } from "@/components/Layouts/DocLayout";
 import { ZapIcon } from "lucide-react";
 
 export const sidebar: SideBar = hrefBuilder("/unreal-engine", {
-	name: "Unreal Engine SDK",
-	links: [
-		{ separator: true },
-		{
-			name: "Overview",
-			href: "",
-		},
-		{
-			name: "Getting Started",
-			href: "/getting-started",
-			icon: <ZapIcon />,
-		},
-		blueprints,
-		cpp,
-	],
+  name: "Unreal Engine SDK",
+  links: [
+    { separator: true },
+    {
+      name: "Overview",
+      href: "",
+    },
+    {
+      name: "Getting Started",
+      href: "/getting-started",
+      icon: <ZapIcon />,
+    },
+    blueprints,
+    cpp,
+  ],
 });
