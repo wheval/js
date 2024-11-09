@@ -13,6 +13,7 @@ import type { AbiParameter } from "abitype";
 import { SolidityInput } from "contract-ui/components/solidity-inputs";
 import { camelToTitle } from "contract-ui/components/solidity-inputs/helpers";
 import { getTemplateValuesForType } from "lib/deployment/template-values";
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import {
   Button,
@@ -25,7 +26,6 @@ import {
   Text,
 } from "tw-components";
 import { RefContractsFieldset } from "./ref-input-fieldset";
-import { useState } from "react";
 
 interface ContractParamsFieldsetProps {
   deployParams: readonly AbiParameter[];
@@ -36,9 +36,9 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
   const form = useFormContext();
 
   const isMobile = useBreakpointValue({ base: true, md: false });
-  
+
   const [isCustomInputEnabled, setIsCustomInputEnabled] = useState(
-    Array(deployParams.length).fill(false)
+    Array(deployParams.length).fill(false),
   );
 
   const handleToggleCustomInput = (index: number) => {
@@ -50,13 +50,21 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
 
     // Clear values accordingly when toggling between input types
     if (isCustomInputEnabled[index]) {
-      form.setValue(`implConstructorParams.${deployParams[index]?.name || "*"}.defaultValue`, "", {
-        shouldDirty: true,
-      });
+      form.setValue(
+        `implConstructorParams.${deployParams[index]?.name || "*"}.defaultValue`,
+        "",
+        {
+          shouldDirty: true,
+        },
+      );
     } else {
-      form.setValue(`implConstructorParams.${deployParams[index]?.name || "*"}.ref`, "", {
-        shouldDirty: true,
-      });
+      form.setValue(
+        `implConstructorParams.${deployParams[index]?.name || "*"}.ref`,
+        "",
+        {
+          shouldDirty: true,
+        },
+      );
     }
   };
 
@@ -163,7 +171,7 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
                           <RefContractsFieldset param={param} />
                         )}
 
-                        {param.type === "address" && ( 
+                        {param.type === "address" && (
                           <Checkbox
                             isChecked={isCustomInputEnabled[idx]}
                             onChange={() => handleToggleCustomInput(idx)}
@@ -172,47 +180,48 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
                           </Checkbox>
                         )}
                       </Flex>
-                      {paramTemplateValues.length > 0 && !isCustomInputEnabled[idx] && (
-                        <InputRightElement width="10.5rem">
-                          <Tooltip
-                            bg="transparent"
-                            boxShadow="none"
-                            shouldWrapChildren
-                            label={
-                              <Card
-                                as={Flex}
-                                flexDir="column"
-                                gap={2}
-                                bgColor="backgroundHighlight"
-                              >
-                                <Text>
-                                  {paramTemplateValues[0]?.helperText} Click to
-                                  apply.
-                                </Text>
-                              </Card>
-                            }
-                          >
-                            <Button
-                              size="xs"
-                              padding="3"
-                              paddingY="3.5"
-                              onClick={() => {
-                                form.setValue(
-                                  `constructorParams.${
-                                    param.name ? param.name : "*"
-                                  }.defaultValue`,
-                                  paramTemplateValues[0]?.value,
-                                  {
-                                    shouldDirty: true,
-                                  },
-                                );
-                              }}
+                      {paramTemplateValues.length > 0 &&
+                        !isCustomInputEnabled[idx] && (
+                          <InputRightElement width="10.5rem">
+                            <Tooltip
+                              bg="transparent"
+                              boxShadow="none"
+                              shouldWrapChildren
+                              label={
+                                <Card
+                                  as={Flex}
+                                  flexDir="column"
+                                  gap={2}
+                                  bgColor="backgroundHighlight"
+                                >
+                                  <Text>
+                                    {paramTemplateValues[0]?.helperText} Click
+                                    to apply.
+                                  </Text>
+                                </Card>
+                              }
                             >
-                              {paramTemplateValues[0]?.value}
-                            </Button>
-                          </Tooltip>
-                        </InputRightElement>
-                      )}
+                              <Button
+                                size="xs"
+                                padding="3"
+                                paddingY="3.5"
+                                onClick={() => {
+                                  form.setValue(
+                                    `constructorParams.${
+                                      param.name ? param.name : "*"
+                                    }.defaultValue`,
+                                    paramTemplateValues[0]?.value,
+                                    {
+                                      shouldDirty: true,
+                                    },
+                                  );
+                                }}
+                              >
+                                {paramTemplateValues[0]?.value}
+                              </Button>
+                            </Tooltip>
+                          </InputRightElement>
+                        )}
                     </InputGroup>
                     <FormErrorMessage>
                       {

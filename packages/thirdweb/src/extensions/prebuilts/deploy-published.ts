@@ -106,7 +106,8 @@ export async function deployPublishedContract(
     deployMetadata,
     client,
     initializeParams: contractParams || deployMetadata.constructorParams,
-    implementationConstructorParams: implementationConstructorParams || deployMetadata.implConstructorParams,
+    implementationConstructorParams:
+      implementationConstructorParams || deployMetadata.implConstructorParams,
     salt,
   });
 }
@@ -147,14 +148,9 @@ type ProcessRefDeploymentsOptions = {
 };
 
 async function processRefDeployments(options: ProcessRefDeploymentsOptions) {
-  const {
-    client,
-    account,
-    chain,
-    params
-  } = options;
+  const { client, account, chain, params } = options;
 
-  for (const [key, param] of Object.entries(params)) {
+  for (const param of Object.values(params)) {
     const ref = param.ref;
     if (ref && ref.publisher && ref.version && ref.contractId) {
       // Call the fetchAndDeployContract function with the ref data
@@ -192,7 +188,10 @@ export async function deployContractfromDeployMetadata(
     account,
     chain,
     params:
-      implementationConstructorParams as Record<string, ImplementationConstructorParam> || {}
+      (implementationConstructorParams as Record<
+        string,
+        ImplementationConstructorParam
+      >) || {},
   });
 
   await processRefDeployments({
@@ -200,7 +199,8 @@ export async function deployContractfromDeployMetadata(
     account,
     chain,
     params:
-      initializeParams as Record<string, ImplementationConstructorParam> || {}
+      (initializeParams as Record<string, ImplementationConstructorParam>) ||
+      {},
   });
 
   switch (deployMetadata?.deployType) {

@@ -26,15 +26,15 @@ import { RefContractsFieldset } from "./ref-input-fieldset";
 interface ImplementationParamsFieldsetProps {
   implParams: readonly AbiParameter[];
 }
-export const ImplementationParamsFieldset: React.FC<ImplementationParamsFieldsetProps> = ({
-  implParams,
-}) => {
+export const ImplementationParamsFieldset: React.FC<
+  ImplementationParamsFieldsetProps
+> = ({ implParams }) => {
   const form = useFormContext();
 
   const isMobile = useBreakpointValue({ base: true, md: false });
-  
+
   const [isCustomInputEnabled, setIsCustomInputEnabled] = useState(
-    Array(implParams.length).fill(false)
+    Array(implParams.length).fill(false),
   );
 
   const handleToggleCustomInput = (index: number) => {
@@ -46,20 +46,30 @@ export const ImplementationParamsFieldset: React.FC<ImplementationParamsFieldset
 
     // Clear values accordingly when toggling between input types
     if (isCustomInputEnabled[index]) {
-      form.setValue(`implConstructorParams.${implParams[index]?.name || "*"}.defaultValue`, "", {
-        shouldDirty: true,
-      });
+      form.setValue(
+        `implConstructorParams.${implParams[index]?.name || "*"}.defaultValue`,
+        "",
+        {
+          shouldDirty: true,
+        },
+      );
     } else {
-      form.setValue(`implConstructorParams.${implParams[index]?.name || "*"}.ref`, "", {
-        shouldDirty: true,
-      });
+      form.setValue(
+        `implConstructorParams.${implParams[index]?.name || "*"}.ref`,
+        "",
+        {
+          shouldDirty: true,
+        },
+      );
     }
   };
 
   return (
     <Flex gap={16} direction="column" as="fieldset">
       <Flex gap={2} direction="column">
-        <Heading size="title.lg">Implementation Contract Constructor Parameters</Heading>
+        <Heading size="title.lg">
+          Implementation Contract Constructor Parameters
+        </Heading>
         <Text fontStyle="normal">
           These are the parameters users will need to fill in when deploying
           this contract.
@@ -128,47 +138,48 @@ export const ImplementationParamsFieldset: React.FC<ImplementationParamsFieldset
                           </Checkbox>
                         )}
                       </Flex>
-                      {paramTemplateValues.length > 0 && !isCustomInputEnabled[idx] && (
-                        <InputRightElement width="10.5rem">
-                          <Tooltip
-                            bg="transparent"
-                            boxShadow="none"
-                            shouldWrapChildren
-                            label={
-                              <Card
-                                as={Flex}
-                                flexDir="column"
-                                gap={2}
-                                bgColor="backgroundHighlight"
-                              >
-                                <Text>
-                                  {paramTemplateValues[0]?.helperText} Click to
-                                  apply.
-                                </Text>
-                              </Card>
-                            }
-                          >
-                            <Button
-                              size="xs"
-                              padding="3"
-                              paddingY="3.5"
-                              onClick={() => {
-                                form.setValue(
-                                  `implConstructorParams.${
-                                    param.name ? param.name : "*"
-                                  }.defaultValue`,
-                                  paramTemplateValues[0]?.value,
-                                  {
-                                    shouldDirty: true,
-                                  },
-                                );
-                              }}
+                      {paramTemplateValues.length > 0 &&
+                        !isCustomInputEnabled[idx] && (
+                          <InputRightElement width="10.5rem">
+                            <Tooltip
+                              bg="transparent"
+                              boxShadow="none"
+                              shouldWrapChildren
+                              label={
+                                <Card
+                                  as={Flex}
+                                  flexDir="column"
+                                  gap={2}
+                                  bgColor="backgroundHighlight"
+                                >
+                                  <Text>
+                                    {paramTemplateValues[0]?.helperText} Click
+                                    to apply.
+                                  </Text>
+                                </Card>
+                              }
                             >
-                              {paramTemplateValues[0]?.value}
-                            </Button>
-                          </Tooltip>
-                        </InputRightElement>
-                      )}
+                              <Button
+                                size="xs"
+                                padding="3"
+                                paddingY="3.5"
+                                onClick={() => {
+                                  form.setValue(
+                                    `implConstructorParams.${
+                                      param.name ? param.name : "*"
+                                    }.defaultValue`,
+                                    paramTemplateValues[0]?.value,
+                                    {
+                                      shouldDirty: true,
+                                    },
+                                  );
+                                }}
+                              >
+                                {paramTemplateValues[0]?.value}
+                              </Button>
+                            </Tooltip>
+                          </InputRightElement>
+                        )}
                     </InputGroup>
                     <FormErrorMessage>
                       {

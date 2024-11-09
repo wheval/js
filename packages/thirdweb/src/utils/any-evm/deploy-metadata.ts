@@ -221,10 +221,10 @@ export type ExtendedMetadata = {
       defaultValue?: string;
       hidden?: boolean;
       ref?: {
-	      publisher: string;
-	      version: string;
-	      contractId: string;
-      }
+        publisher: string;
+        version: string;
+        contractId: string;
+      };
     }
   >;
   implConstructorParams?: Record<
@@ -232,10 +232,10 @@ export type ExtendedMetadata = {
     {
       defaultValue?: string;
       ref?: {
-	      publisher: string;
-	      version: string;
-	      contractId: string;
-      }
+        publisher: string;
+        version: string;
+        contractId: string;
+      };
     }
   >;
   compositeAbi?: Abi;
