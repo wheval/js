@@ -11,7 +11,7 @@ import type { SocialProfile } from "./types.js";
  * @returns A promise resolving to the array of social profiles for the given address.
  *
  * @example
- * ```ts
+ * ```
  * import { getSocialProfiles } from "thirdweb/social";
  * const profiles = await getSocialProfiles({
  *   address: "0x...",

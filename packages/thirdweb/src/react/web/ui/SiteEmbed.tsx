@@ -26,6 +26,7 @@ import { useActiveWallet } from "../../core/hooks/wallets/useActiveWallet.js";
  *
  * <SiteEmbed src="https://thirdweb.com" client={thirdwebClient} ecosystem={{ id: "ecosystem.thirdweb" }} />
  * ```
+ * @walletConnection
  */
 export function SiteEmbed({
   src,

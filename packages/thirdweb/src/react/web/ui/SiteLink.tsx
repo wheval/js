@@ -27,6 +27,7 @@ import { useActiveWallet } from "../../core/hooks/wallets/useActiveWallet.js";
  *   Visit Site
  * </SiteLink>
  * ```
+ * @walletConnection
  */
 export function SiteLink({
   href,

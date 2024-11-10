@@ -50,7 +50,9 @@ export const socialIcons = {
   github: githubIconUri,
 };
 
-// TODO: this should return actual <svg> elements so they can be themed
+/**
+ * @internal
+ */
 export function getSocialIcon(provider: AuthOption | ({} & string)) {
   switch (provider) {
     case "google":
