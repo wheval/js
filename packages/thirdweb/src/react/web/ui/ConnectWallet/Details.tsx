@@ -229,7 +229,15 @@ export const ConnectedWalletDetails: React.FC<{
             }}
           />
         ) : (
-          activeAccount && <Blobbie address={activeAccount.address} size={35} />
+          activeAccount && (
+            <Blobbie
+              address={activeAccount.address}
+              style={{
+                width: "35px",
+                height: "35px",
+              }}
+            />
+          )
         )}
       </Container>
       <Container
@@ -419,7 +427,10 @@ function DetailsModal(props: {
           activeAccount && (
             <Blobbie
               address={activeAccount.address}
-              size={Number(iconSize.xxl)}
+              style={{
+                width: `${iconSize.xxl}px`,
+                height: `${iconSize.xxl}px`,
+              }}
             />
           )
         )}

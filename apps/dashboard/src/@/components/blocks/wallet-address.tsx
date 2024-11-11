@@ -191,7 +191,13 @@ function WalletAvatar(props: {
           className="size-6"
         />
       ) : (
-        <Blobbie address={props.address} size={24} />
+        <Blobbie
+          address={props.address}
+          style={{
+            width: "24px",
+            height: "24px",
+          }}
+        />
       )}
     </div>
   );

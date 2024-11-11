@@ -171,7 +171,10 @@ export function WalletRow(props: {
             border: `1px solid ${theme.colors.borderColor}`,
           }}
         >
-          <Blobbie address={props.address} size={Number(iconSize.md)} />
+          <Blobbie
+            address={props.address}
+            style={{ width: `${iconSize.md}px`, height: `${iconSize.md}px` }}
+          />
         </Container>
       )}
 

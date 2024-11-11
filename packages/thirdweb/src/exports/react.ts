@@ -199,3 +199,6 @@ export type {
 // Site Embed and Linking
 export { SiteEmbed } from "../react/web/ui/SiteEmbed.js";
 export { SiteLink } from "../react/web/ui/SiteLink.js";
+
+// Account
+export { Account } from "../react/web/ui/prebuilt/Account/index.js";

@@ -148,7 +148,13 @@ function LinkedProfile({
             overflow: "hidden",
           }}
         >
-          <Blobbie address={profile.details.address} size={32} />
+          <Blobbie
+            address={profile.details.address}
+            style={{
+              width: "32px",
+              height: "32px",
+            }}
+          />
         </Container>
       ) : profile.type === "passkey" ? (
         <FingerPrintIcon size={iconSize.lg} />
