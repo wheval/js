@@ -40,9 +40,9 @@ describe.runIf(process.env.TW_SECRET_KEY)(
           defaultAdmin: TEST_ACCOUNT_A.address,
           entrypoint: ENTRYPOINT_ADDRESS_v0_6,
         },
-        salt: "test",
+        salt: "test-direct-deploy",
       });
-      expect(address).toBe("0x8a9e25cbf6daa2b56cc0df4669195b8c8c20cda8");
+      expect(address).toBe("0x2813e86639aef69501b67536cd1f033eb884c0a2");
       const isDeployed = await isContractDeployed({
         client: TEST_CLIENT,
         chain: ANVIL_CHAIN,
