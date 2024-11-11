@@ -21,7 +21,7 @@ import {
   Heading,
   Text,
 } from "tw-components";
-import { RefContractsFieldset } from "./ref-input-fieldset";
+import { RefContractImplInput } from "./ref-input-impl";
 
 interface ImplementationParamsFieldsetProps {
   implParams: readonly AbiParameter[];
@@ -126,7 +126,7 @@ export const ImplementationParamsFieldset: React.FC<
                             />
                           </>
                         ) : (
-                          <RefContractsFieldset param={param} />
+                          <RefContractImplInput param={param} />
                         )}
 
                         {param.type === "address" && (

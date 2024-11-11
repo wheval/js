@@ -71,7 +71,7 @@ type CustomContractDeploymentFormData = {
   deployDeterministic: boolean;
   saltForCreate2: string;
   signerAsSalt: boolean;
-  deployParams: Record<string, string>;
+  deployParams: Record<string, string | ContractRef>;
   moduleData: Record<string, Record<string, string>>;
   contractMetadata?: {
     name: string;
@@ -81,6 +81,14 @@ type CustomContractDeploymentFormData = {
   };
   recipients?: Recipient[];
 };
+
+interface ContractRef {
+  ref: {
+    publisher: string;
+    version: string;
+    contractId: string;
+  };
+}
 
 export type CustomContractDeploymentForm =
   UseFormReturn<CustomContractDeploymentFormData>;
@@ -210,9 +218,15 @@ export const CustomContractForm: React.FC<CustomContractFormProps> = ({
             acc[param.name] = activeAccount.address;
           }
 
+          // specify refs if present
+          const ref = metadata?.constructorParams?.[param.name]?.ref;
+          if (ref && acc[param.name] === "") {
+            acc[param.name] = { ref };
+          }
+
           return acc;
         },
-        {} as Record<string, string>,
+        {} as Record<string, string | ContractRef>,
       ),
     }),
     [deployParams, metadata?.constructorParams, activeAccount, walletChain?.id],
@@ -357,7 +371,11 @@ export const CustomContractForm: React.FC<CustomContractFormProps> = ({
           const contructorParams = metadata?.constructorParams || {};
           const extraMetadataParam = contructorParams[paramKey];
 
-          if (shouldHide(paramKey) || !extraMetadataParam?.hidden) {
+          if (
+            shouldHide(paramKey) ||
+            !extraMetadataParam?.hidden ||
+            extraMetadataParam?.ref
+          ) {
             return null;
           }
 
@@ -416,11 +434,12 @@ export const CustomContractForm: React.FC<CustomContractFormProps> = ({
           params: {
             name: params.contractMetadata?.name || "",
             contractURI: _contractURI,
-            defaultAdmin: params.deployParams._defaultAdmin,
+            defaultAdmin: params.deployParams._defaultAdmin as string,
             platformFeeBps: Number(params.deployParams._platformFeeBps),
-            platformFeeRecipient: params.deployParams._platformFeeRecipient,
+            platformFeeRecipient: params.deployParams
+              ._platformFeeRecipient as string,
             trustedForwarders: params.deployParams._trustedForwarders
-              ? JSON.parse(params.deployParams._trustedForwarders)
+              ? JSON.parse(params.deployParams._trustedForwarders as string)
               : undefined,
           },
         });
@@ -657,7 +676,7 @@ export const CustomContractForm: React.FC<CustomContractFormProps> = ({
                     ).error?.message,
                   }}
                   royaltyBps={{
-                    value: form.watch("deployParams._royaltyBps"),
+                    value: form.watch("deployParams._royaltyBps") as string,
                     isInvalid: !!form.getFieldState(
                       "deployParams._royaltyBps",
                       form.formState,
@@ -754,7 +773,11 @@ export const CustomContractForm: React.FC<CustomContractFormProps> = ({
                   const contructorParams = metadata?.constructorParams || {};
                   const extraMetadataParam = contructorParams[paramKey];
 
-                  if (shouldHide(paramKey) || extraMetadataParam?.hidden) {
+                  if (
+                    shouldHide(paramKey) ||
+                    extraMetadataParam?.hidden ||
+                    extraMetadataParam?.ref
+                  ) {
                     return null;
                   }
 

@@ -130,7 +130,7 @@ export type DeployContractfromDeployMetadataOptions = {
 };
 
 interface RefType {
-  publisher: string;
+  publisherAddress: string;
   version: string;
   contractId: string;
 }
@@ -144,26 +144,43 @@ type ProcessRefDeploymentsOptions = {
   client: ThirdwebClient;
   chain: Chain;
   account: Account;
-  params: Record<string, ImplementationConstructorParam>;
+  paramValue: string | ImplementationConstructorParam;
 };
 
-async function processRefDeployments(options: ProcessRefDeploymentsOptions) {
-  const { client, account, chain, params } = options;
+async function processRefDeployments(
+  options: ProcessRefDeploymentsOptions,
+): Promise<string> {
+  const { client, account, chain, paramValue } = options;
 
-  for (const param of Object.values(params)) {
-    const ref = param.ref;
-    if (ref?.publisher && ref.version && ref.contractId) {
-      // Call the fetchAndDeployContract function with the ref data
-      await deployPublishedContract({
-        client,
-        chain,
-        account,
-        contractId: ref.contractId,
-        publisher: ref.publisher,
-        version: ref.version,
-      });
+  if (typeof paramValue === "object") {
+    if (
+      "defaultValue" in paramValue &&
+      paramValue.defaultValue &&
+      paramValue.defaultValue.length > 0
+    ) {
+      return paramValue.defaultValue;
+    }
+
+    if ("ref" in paramValue && paramValue.ref) {
+      const ref = paramValue.ref;
+
+      if (ref.publisherAddress && ref.version && ref.contractId) {
+        // Call the fetchAndDeployContract function with the ref data
+        const addr = await deployPublishedContract({
+          client,
+          chain,
+          account,
+          contractId: ref.contractId,
+          publisher: ref.publisherAddress,
+          version: ref.version,
+        });
+
+        return addr;
+      }
     }
   }
+
+  return paramValue as string;
 }
 
 /**
@@ -183,25 +200,29 @@ export async function deployContractfromDeployMetadata(
     salt,
   } = options;
 
-  await processRefDeployments({
-    client,
-    account,
-    chain,
-    params:
-      (implementationConstructorParams as Record<
-        string,
-        ImplementationConstructorParam
-      >) || {},
-  });
+  const processedImplParams: Record<string, string> = {};
+  for (const key in implementationConstructorParams) {
+    processedImplParams[key] = await processRefDeployments({
+      client,
+      account,
+      chain,
+      paramValue: implementationConstructorParams[key] as
+        | string
+        | ImplementationConstructorParam,
+    });
+  }
 
-  await processRefDeployments({
-    client,
-    account,
-    chain,
-    params:
-      (initializeParams as Record<string, ImplementationConstructorParam>) ||
-      {},
-  });
+  const processedInitializeParams: Record<string, string> = {};
+  for (const key in initializeParams) {
+    processedInitializeParams[key] = await processRefDeployments({
+      client,
+      account,
+      chain,
+      paramValue: initializeParams[key] as
+        | string
+        | ImplementationConstructorParam,
+    });
+  }
 
   switch (deployMetadata?.deployType) {
     case "standard": {
@@ -210,7 +231,7 @@ export async function deployContractfromDeployMetadata(
         client,
         chain,
         compilerMetadata: deployMetadata,
-        contractParams: initializeParams,
+        contractParams: processedInitializeParams,
         salt,
       });
     }
@@ -229,7 +250,7 @@ export async function deployContractfromDeployMetadata(
           account,
           contractId: deployMetadata.name,
           constructorParams:
-            implementationConstructorParams ||
+            processedImplParams ||
             (await getAllDefaultConstructorParamsForImplementation({
               chain,
               client,
@@ -242,7 +263,7 @@ export async function deployContractfromDeployMetadata(
         chain,
         deployMetadata: deployMetadata,
         implementationContract,
-        initializeParams,
+        initializeParams: processedInitializeParams,
         account,
         modules,
       });
@@ -298,7 +319,7 @@ export async function deployContractfromDeployMetadata(
         client,
         chain,
         compilerMetadata: deployMetadata,
-        contractParams: initializeParams,
+        contractParams: processedInitializeParams,
         salt,
       });
     }
