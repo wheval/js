@@ -46,7 +46,7 @@ export const TrustedForwardersFieldset: React.FC<
           <InputGroup size="md">
             <Flex flexDir="column" w="full">
               <SolidityInput
-                value={form.watch("deployParams._trustedForwarders")}
+                value={form.watch("deployParams._trustedForwarders") as string}
                 solidityType="address[]"
                 {...form.register("deployParams._trustedForwarders")}
               />
