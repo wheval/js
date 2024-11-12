@@ -50,7 +50,16 @@ export const socialIcons = {
   github: githubIconUri,
 };
 
-// TODO: this should return actual <svg> elements so they can be themed
+/**
+ * Gets the icon URI for a given social authentication provider
+ * @param provider - The authentication provider to get the icon for
+ * @returns A data URI containing the SVG icon for the provider, or a generic wallet icon if the provider is not recognized
+ * @example
+ * ```tsx
+ * const googleIcon = getSocialIcon("google")
+ * const appleIcon = getSocialIcon("apple")
+ * ```
+ */
 export function getSocialIcon(provider: AuthOption | ({} & string)) {
   switch (provider) {
     case "google":
