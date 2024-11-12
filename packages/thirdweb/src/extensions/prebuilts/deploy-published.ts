@@ -129,15 +129,18 @@ export type DeployContractfromDeployMetadataOptions = {
   salt?: string;
 };
 
-interface RefType {
-  publisherAddress: string;
-  version: string;
-  contractId: string;
+interface Ref {
+  refType: "address" | "address[]";
+  contracts: {
+    publisherAddress: string;
+    version: string;
+    contractId: string;
+  }[];
 }
 
 interface ImplementationConstructorParam {
   defaultValue?: string;
-  ref?: RefType;
+  ref?: Ref;
 }
 
 type ProcessRefDeploymentsOptions = {
@@ -163,19 +166,39 @@ async function processRefDeployments(
 
     if ("ref" in paramValue && paramValue.ref) {
       const ref = paramValue.ref;
+      const contracts = ref.contracts;
 
-      if (ref.publisherAddress && ref.version && ref.contractId) {
+      if (ref.refType === "address") {
         // Call the fetchAndDeployContract function with the ref data
         const addr = await deployPublishedContract({
           client,
           chain,
           account,
-          contractId: ref.contractId,
-          publisher: ref.publisherAddress,
-          version: ref.version,
+          contractId: contracts[0]?.contractId as string,
+          publisher: contracts[0]?.publisherAddress,
+          version: contracts[0]?.version,
         });
 
         return addr;
+      }
+
+      if (ref.refType === "address[]") {
+        const addressArray = [];
+
+        for (const c of contracts) {
+          addressArray.push(
+            await deployPublishedContract({
+              client,
+              chain,
+              account,
+              contractId: c.contractId,
+              publisher: c.publisherAddress,
+              version: c.version,
+            }),
+          );
+        }
+
+        return JSON.stringify(addressArray);
       }
     }
   }

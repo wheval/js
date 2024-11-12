@@ -159,6 +159,15 @@ type ParsedCompilerMetadata = {
   zk_version?: string;
 };
 
+type Ref = {
+  refType: "address" | "address[]";
+  contracts: Array<{
+    contractId: string;
+    publisherAddress: string;
+    version: string;
+  }>;
+};
+
 export type CompilerMetadata = Prettify<
   RawCompilerMetadata & ParsedCompilerMetadata
 >;
@@ -220,22 +229,14 @@ export type ExtendedMetadata = {
       description?: string;
       defaultValue?: string;
       hidden?: boolean;
-      ref?: {
-        publisher: string;
-        version: string;
-        contractId: string;
-      };
+      ref?: Ref;
     }
   >;
   implConstructorParams?: Record<
     string,
     {
       defaultValue?: string;
-      ref?: {
-        publisher: string;
-        version: string;
-        contractId: string;
-      };
+      ref?: Ref;
     }
   >;
   compositeAbi?: Abi;

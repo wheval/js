@@ -2,36 +2,43 @@ import {
   Divider,
   Flex,
   FormControl,
+  Icon,
+  IconButton,
   Input,
   Select,
   Skeleton,
 } from "@chakra-ui/react";
 import type { AbiParameter } from "abitype";
+import { TrashIcon } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 import { FormLabel } from "tw-components";
 import { useAllVersions, usePublishedContractsQuery } from "../hooks";
 
 interface RefContractInputProps {
   param: AbiParameter;
+  index: number;
+  remove: (index: number) => void;
 }
 
 export const RefContractInput: React.FC<RefContractInputProps> = ({
   param,
+  index,
+  remove,
 }) => {
   const form = useFormContext();
 
   const publishedContractsQuery = usePublishedContractsQuery(
     form.watch(
-      `constructorParams.${param.name ? param.name : "*"}.ref.publisherAddress`,
+      `constructorParams.${param.name ? param.name : "*"}.ref.contracts.${index}.publisherAddress`,
     ),
   );
 
   const allVersions = useAllVersions(
     form.watch(
-      `constructorParams.${param.name ? param.name : "*"}.ref.publisherAddress`,
+      `constructorParams.${param.name ? param.name : "*"}.ref.contracts.${index}.publisherAddress`,
     ),
     form.watch(
-      `constructorParams.${param.name ? param.name : "*"}.ref.contractId`,
+      `constructorParams.${param.name ? param.name : "*"}.ref.contracts.${index}.contractId`,
     ),
   );
 
@@ -48,7 +55,7 @@ export const RefContractInput: React.FC<RefContractInputProps> = ({
           gap={1}
           isInvalid={
             !!form.getFieldState(
-              `constructorParams.${param.name ? param.name : "*"}.ref.publisherAddress`,
+              `constructorParams.${param.name ? param.name : "*"}.ref.contracts.${index}.publisherAddress`,
               form.formState,
             ).error
           }
@@ -57,7 +64,7 @@ export const RefContractInput: React.FC<RefContractInputProps> = ({
           <Input
             placeholder="Address or ENS"
             {...form.register(
-              `constructorParams.${param.name ? param.name : "*"}.ref.publisherAddress`,
+              `constructorParams.${param.name ? param.name : "*"}.ref.contracts.${index}.publisherAddress`,
             )}
           />
         </FormControl>
@@ -73,7 +80,7 @@ export const RefContractInput: React.FC<RefContractInputProps> = ({
             <Select
               isDisabled={(publishedContractsQuery?.data || []).length === 0}
               {...form.register(
-                `constructorParams.${param.name ? param.name : "*"}.ref.contractId`,
+                `constructorParams.${param.name ? param.name : "*"}.ref.contracts.${index}.contractId`,
               )}
               placeholder={
                 publishedContractsQuery.isFetched &&
@@ -101,7 +108,7 @@ export const RefContractInput: React.FC<RefContractInputProps> = ({
               w="full"
               isDisabled={!allVersions.data}
               {...form.register(
-                `constructorParams.${param.name ? param.name : "*"}.ref.version`,
+                `constructorParams.${param.name ? param.name : "*"}.ref.contracts.${index}.version`,
               )}
               borderRadius="lg"
             >
@@ -114,6 +121,12 @@ export const RefContractInput: React.FC<RefContractInputProps> = ({
             </Select>
           </Skeleton>
         </FormControl>
+        <IconButton
+          icon={<Icon as={TrashIcon} boxSize={5} />}
+          aria-label="Remove row"
+          onClick={() => remove(index)}
+          alignSelf="end"
+        />
       </Flex>
       <Divider />
     </Flex>

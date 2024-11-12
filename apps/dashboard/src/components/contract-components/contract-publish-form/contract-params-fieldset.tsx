@@ -25,7 +25,7 @@ import {
   Heading,
   Text,
 } from "tw-components";
-import { RefContractInput } from "./ref-input";
+import { RefInputFieldset } from "./ref-input-fieldset";
 
 interface ContractParamsFieldsetProps {
   deployParams: readonly AbiParameter[];
@@ -45,27 +45,37 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
     setIsCustomInputEnabled((prev) => {
       const updated = [...prev];
       updated[index] = !updated[index];
+
+      // Clear values accordingly when toggling between input types
+      if (updated[index]) {
+        form.setValue(
+          `constructorParams.${deployParams[index]?.name || "*"}.ref.refType`,
+          deployParams[index]?.type,
+        );
+
+        form.setValue(
+          `constructorParams.${deployParams[index]?.name || "*"}.defaultValue`,
+          "",
+          {
+            shouldDirty: true,
+          },
+        );
+      } else {
+        form.setValue(
+          `constructorParams.${deployParams[index]?.name || "*"}.ref.refType`,
+          "",
+        );
+        form.setValue(
+          `constructorParams.${deployParams[index]?.name || "*"}.ref`,
+          "",
+          {
+            shouldDirty: true,
+          },
+        );
+      }
+
       return updated;
     });
-
-    // Clear values accordingly when toggling between input types
-    if (isCustomInputEnabled[index]) {
-      form.setValue(
-        `constructorParams.${deployParams[index]?.name || "*"}.defaultValue`,
-        "",
-        {
-          shouldDirty: true,
-        },
-      );
-    } else {
-      form.setValue(
-        `constructorParams.${deployParams[index]?.name || "*"}.ref`,
-        "",
-        {
-          shouldDirty: true,
-        },
-      );
-    }
   };
 
   return (
@@ -150,9 +160,7 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
                         {!isCustomInputEnabled[idx] ? (
                           <>
                             <SolidityInput
-                              solidityType={
-                                param.type === "address" ? "string" : param.type
-                              }
+                              solidityType={param.type}
                               placeholder={
                                 isMobile ||
                                 paramTemplateValues?.[0]?.value ===
@@ -168,10 +176,11 @@ export const ContractParamsFieldset: React.FC<ContractParamsFieldsetProps> = ({
                             />
                           </>
                         ) : (
-                          <RefContractInput param={param} />
+                          <RefInputFieldset param={param} />
                         )}
 
-                        {param.type === "address" && (
+                        {(param.type === "address" ||
+                          param.type === "address[]") && (
                           <Checkbox
                             isChecked={isCustomInputEnabled[idx]}
                             onChange={() => handleToggleCustomInput(idx)}

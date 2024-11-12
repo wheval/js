@@ -21,7 +21,7 @@ import {
   Heading,
   Text,
 } from "tw-components";
-import { RefContractImplInput } from "./ref-input-impl";
+import { RefInputImplFieldset } from "./ref-input-impl-fieldset";
 
 interface ImplementationParamsFieldsetProps {
   implParams: readonly AbiParameter[];
@@ -41,27 +41,35 @@ export const ImplementationParamsFieldset: React.FC<
     setIsCustomInputEnabled((prev) => {
       const updated = [...prev];
       updated[index] = !updated[index];
+
+      // Clear or set values accordingly when toggling between input types
+      if (updated[index]) {
+        form.setValue(
+          `implConstructorParams.${implParams[index]?.name || "*"}.ref.refType`,
+          implParams[index]?.type,
+        );
+        form.setValue(
+          `implConstructorParams.${implParams[index]?.name || "*"}.defaultValue`,
+          "",
+          {
+            shouldDirty: true,
+          },
+        );
+      } else {
+        form.setValue(
+          `implConstructorParams.${implParams[index]?.name || "*"}.ref.refType`,
+          "",
+        );
+        form.setValue(
+          `implConstructorParams.${implParams[index]?.name || "*"}.ref`,
+          "",
+          {
+            shouldDirty: true,
+          },
+        );
+      }
       return updated;
     });
-
-    // Clear values accordingly when toggling between input types
-    if (isCustomInputEnabled[index]) {
-      form.setValue(
-        `implConstructorParams.${implParams[index]?.name || "*"}.defaultValue`,
-        "",
-        {
-          shouldDirty: true,
-        },
-      );
-    } else {
-      form.setValue(
-        `implConstructorParams.${implParams[index]?.name || "*"}.ref`,
-        "",
-        {
-          shouldDirty: true,
-        },
-      );
-    }
   };
 
   return (
@@ -126,7 +134,7 @@ export const ImplementationParamsFieldset: React.FC<
                             />
                           </>
                         ) : (
-                          <RefContractImplInput param={param} />
+                          <RefInputImplFieldset param={param} />
                         )}
 
                         {param.type === "address" && (

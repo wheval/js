@@ -84,10 +84,10 @@ type CustomContractDeploymentFormData = {
 
 interface ContractRef {
   ref: {
-    publisher: string;
+    publisherAddress: string;
     version: string;
     contractId: string;
-  };
+  }[];
 }
 
 export type CustomContractDeploymentForm =
