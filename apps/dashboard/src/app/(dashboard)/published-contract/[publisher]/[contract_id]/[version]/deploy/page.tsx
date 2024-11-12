@@ -8,13 +8,15 @@ export default async function PublishedContractVersionDeployPage(props: {
     version: string;
   }>;
   searchParams: Promise<{
-    module?: string[];
+    module?: string[] | string;
   }>;
 }) {
   const searchParams = await props.searchParams;
   const params = await props.params;
-  const modules = searchParams.module
-    ?.map((m) => moduleFromBase64(m))
-    .filter((m) => m !== null);
+  const moduleParam = searchParams.module;
+  const modules =
+    moduleParam && Array.isArray(moduleParam)
+      ? moduleParam.map((m) => moduleFromBase64(m)).filter((m) => m !== null)
+      : [];
   return <DeployFormForPublishInfo {...params} modules={modules} />;
 }
